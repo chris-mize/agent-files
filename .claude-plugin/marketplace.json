@@ -1,0 +1,30 @@
+{
+  "name": "cmize-skills",
+  "owner": {
+    "name": "Christopher Mize",
+    "url": "https://github.com/chris-mize"
+  },
+  "metadata": {
+    "description": "Portable Agent Skills for review, research, and quality workflows.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "cmize-skills",
+      "source": "./src",
+      "description": "Portable adversarial review, auto-review, deep research, and best-practices workflows.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Christopher Mize"
+      },
+      "repository": "https://github.com/chris-mize/portable-skills",
+      "license": "MIT",
+      "keywords": [
+        "agent-skills",
+        "review",
+        "research",
+        "quality"
+      ]
+    }
+  ]
+}

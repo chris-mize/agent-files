@@ -1,0 +1,13 @@
+{
+  "name": "cmize-skills",
+  "owner": {
+    "name": "Christopher Mize"
+  },
+  "plugins": [
+    {
+      "name": "cmize-skills",
+      "source": "./src",
+      "description": "Portable adversarial review, auto-review, deep research, and best-practices workflows."
+    }
+  ]
+}
