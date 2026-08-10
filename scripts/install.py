@@ -13,12 +13,16 @@ from datetime import datetime, timezone
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
+try:
+    from .metadata import MetadataError, bundle_version
+except ImportError:  # pragma: no cover - direct script execution
+    from metadata import MetadataError, bundle_version
+
 
 MANIFEST_NAME = ".cmize-skills-manifest.json"
 MANIFEST_SCHEMA_VERSION = 2
 SUPPORTED_MANIFEST_SCHEMAS = {1, MANIFEST_SCHEMA_VERSION}
 BUNDLE_NAME = "cmize-skills"
-BUNDLE_VERSION = "0.1.0"
 TARGET_DESTINATIONS = {
     "claude": Path("~/.claude/skills"),
     "codex": Path("~/.agents/skills"),
@@ -325,6 +329,13 @@ def _serialize_entry(entry: ManagedEntry) -> dict:
     }
 
 
+def _authoritative_bundle_version() -> str:
+    try:
+        return bundle_version()
+    except MetadataError as exc:
+        raise InstallationError(str(exc)) from exc
+
+
 def build_manifest(
     source_root: Path,
     destination: Path,
@@ -347,7 +358,7 @@ def build_manifest(
     return {
         "schema_version": MANIFEST_SCHEMA_VERSION,
         "bundle": BUNDLE_NAME,
-        "bundle_version": BUNDLE_VERSION,
+        "bundle_version": _authoritative_bundle_version(),
         "target": target,
         "destination": str(destination.expanduser().resolve()),
         "source_root": str(source_root),

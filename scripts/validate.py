@@ -10,6 +10,11 @@ import sys
 from pathlib import Path
 from typing import Any
 
+try:
+    from .metadata import MetadataError, bundle_version
+except ImportError:  # pragma: no cover - direct script execution
+    from metadata import MetadataError, bundle_version
+
 
 EXPECTED_SKILLS = {
     "adversarial-review",
@@ -196,15 +201,23 @@ def validate_skill(skill_dir: Path, root: Path) -> list[str]:
     return errors
 
 
-def _validate_plugin_manifest(path: Path, root: Path, errors: list[str]) -> None:
+def _validate_plugin_manifest(
+    path: Path,
+    root: Path,
+    errors: list[str],
+    expected_version: str | None = None,
+) -> None:
     data = _read_json(path, errors)
     if data is None:
         return
     display = _relative_display(path, root)
     if data.get("name") != "cmize-skills":
         errors.append(f"{display}: name must be cmize-skills")
-    if data.get("version") != "0.1.0":
-        errors.append(f"{display}: version must be 0.1.0")
+    if expected_version is not None and data.get("version") != expected_version:
+        errors.append(
+            f"{display}: version must match canonical marketplace metadata.version "
+            f"({expected_version})"
+        )
     if not isinstance(data.get("description"), str) or not data["description"].strip():
         errors.append(f"{display}: description must be non-empty")
     if data.get("skills") != "./skills":
@@ -227,13 +240,32 @@ def _validate_plugin_manifest(path: Path, root: Path, errors: list[str]) -> None
                 )
 
 
-def _validate_marketplace(path: Path, root: Path, errors: list[str]) -> None:
+def _validate_marketplace(
+    path: Path,
+    root: Path,
+    errors: list[str],
+    expected_version: str | None = None,
+) -> None:
     data = _read_json(path, errors)
     if data is None:
         return
     display = _relative_display(path, root)
     if data.get("name") != "cmize-skills":
         errors.append(f"{display}: name must be cmize-skills")
+    is_claude = path == root / ".claude-plugin/marketplace.json"
+    if is_claude:
+        metadata = data.get("metadata")
+        if (
+            expected_version is not None
+            and (
+                not isinstance(metadata, dict)
+                or metadata.get("version") != expected_version
+            )
+        ):
+            errors.append(
+                f"{display}: metadata.version must match canonical marketplace version "
+                f"({expected_version})"
+            )
     is_codex = path == root / ".agents/plugins/marketplace.json"
     if not is_codex and (
         not isinstance(data.get("owner"), dict) or not data["owner"].get("name")
@@ -256,6 +288,15 @@ def _validate_marketplace(path: Path, root: Path, errors: list[str]) -> None:
         source_path = None
     if source_path != "./src":
         errors.append(f"{display}: plugin source must point to ./src")
+    if (
+        is_claude
+        and expected_version is not None
+        and plugin.get("version") != expected_version
+    ):
+        errors.append(
+            f"{display}: plugin version must match canonical marketplace metadata.version "
+            f"({expected_version})"
+        )
     if is_codex:
         unexpected = sorted(set(data) - CODEX_MARKETPLACE_KEYS)
         if unexpected:
@@ -333,6 +374,11 @@ def _validate_codex_policy(root: Path, errors: list[str]) -> None:
 def validate_repository(root: Path) -> list[str]:
     root = root.resolve()
     errors: list[str] = []
+    try:
+        expected_version = bundle_version(root)
+    except MetadataError as exc:
+        errors.append(str(exc))
+        expected_version = None
     skills_root = root / "src/skills"
     if not skills_root.is_dir():
         return ["missing src/skills directory"]
@@ -346,9 +392,9 @@ def validate_repository(root: Path) -> list[str]:
         errors.extend(validate_skill(skills_root / skill_name, root))
 
     for relative_path in PLUGIN_MANIFESTS:
-        _validate_plugin_manifest(root / relative_path, root, errors)
+        _validate_plugin_manifest(root / relative_path, root, errors, expected_version)
     for relative_path in MARKETPLACE_MANIFESTS:
-        _validate_marketplace(root / relative_path, root, errors)
+        _validate_marketplace(root / relative_path, root, errors, expected_version)
     _validate_codex_policy(root, errors)
 
     skill_files = {

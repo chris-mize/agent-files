@@ -2,7 +2,7 @@
 
 All notable changes to the `cmize-skills` bundle are recorded here. The bundle uses one release version; individual skills do not have independent versions.
 
-## Unreleased
+## [1.0.0] - 2026-08-10
 
 ### Added
 
@@ -14,6 +14,12 @@ All notable changes to the `cmize-skills` bundle are recorded here. The bundle u
 - `actor-critic-mode`, a bounded generator–critic operating mode with
   host-specific invocation references, capability probing, receipt validation,
   and a sanitized evaluation harness.
+
+### Changed
+
+- Made `.claude-plugin/marketplace.json` `metadata.version` authoritative for
+  installer manifests and validation; schema-required version copies are
+  checked against it.
 
 ## [0.1.0] - 2026-08-10
 

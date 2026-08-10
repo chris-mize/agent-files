@@ -35,10 +35,10 @@ skills](https://docs.anthropic.com/en/docs/claude-code/skills).
 
 ## Release-candidate identity and command ledger
 
-- Candidate bundle: `cmize-skills` `0.1.0` with the unreleased `actor-critic-mode` addition.
-- Source identity: current canonical `src/` content fingerprint `fd9f8e7faa0464668b8c4bbcf50e0536acda956cb5bd6649c1ce7f85885a9eef` (excluding generated Python bytecode); the prior tagged `v0.1.0` release used the earlier fingerprint recorded in its release evidence.
-- Static gates: `python3 scripts/validate.py` passed; `python3 -m unittest discover -s tests -p 'test_*.py'` passed with 26 tests; actor-critic capability and evaluation harness self-tests passed.
-- Codex plugin catalog: `CODEX_HOME=/tmp/cmize-codex-market-replay-2/.codex codex plugin marketplace add "$PWD" --json` followed by `CODEX_HOME=/tmp/cmize-codex-market-replay-2/.codex codex plugin add cmize-skills@cmize-skills --json` passed from the repository root; installed version was `0.1.0`.
+- Release bundle: `cmize-skills` `1.0.0`, published as tag `v1.0.0`.
+- Source identity: canonical `src/` content fingerprint `5303672d1d1ab2a57eab8adf05923ea807c066b147b69cef6415d82b803453c9` (excluding generated Python bytecode); the `v1.0.0` release tag binds this source identity.
+- Static gates: `python3 scripts/validate.py` passed; `python3 -m unittest discover -s tests -p 'test_*.py'` passed with 27 tests; actor-critic capability and evaluation harness self-tests passed.
+- Historical Codex plugin catalog replay: `CODEX_HOME=/tmp/cmize-codex-market-replay-2/.codex codex plugin marketplace add "$PWD" --json` followed by `CODEX_HOME=/tmp/cmize-codex-market-replay-2/.codex codex plugin add cmize-skills@cmize-skills --json` passed from the repository root; that replay installed version `0.1.0`.
 - Codex explicit skills: an isolated project `.agents/skills` install explicitly invoked `adversarial-review` and `best-practices`; both reported findings without edits.
 - Codex explicit auto-review: one separate reviewer was launched and returned `insufficient evidence` for the intentionally underspecified smoke plan; no files were edited. Prompts explicitly using other skills did not invoke auto-review.
 - Codex deep-research: canonical Light preflight and three research workers passed, but the required critique stage hit the platform thread limit twice; the run is recorded as terminal coverage failure.
@@ -64,7 +64,7 @@ python3 scripts/install.py --target cursor --destination /tmp/cmize-skills-clean
 python3 scripts/install.py --target cursor --destination /tmp/cmize-skills-clean-cursor
 ```
 
-Results: validator passed; 26 unit tests and both actor-critic harness self-tests passed; all three direct dry-run/copy pairs passed. The isolated Codex home used below was preconfigured for the test account outside this repository; no credentials are stored here.
+Results: validator passed; 27 unit tests and both actor-critic harness self-tests passed; all three direct dry-run/copy pairs passed. The isolated Codex home used below was preconfigured for the test account outside this repository; no credentials are stored here.
 
 ### Direct-install manifest lifecycle replay
 
@@ -95,7 +95,8 @@ CODEX_HOME=/tmp/cmize-codex-market-replay-2/.codex \
   codex plugin add cmize-skills@cmize-skills --json
 ```
 
-Result: the marketplace was added and `cmize-skills@cmize-skills` installed as version `0.1.0` in the isolated cache.
+Result: historical `v0.1.0` replay added the marketplace and installed
+`cmize-skills@cmize-skills` as version `0.1.0` in the isolated cache.
 
 ```bash
 CODEX_HOME=/tmp/cmize-codex-isolated/.codex \
@@ -224,7 +225,7 @@ Evidence record:
 - Version: `codex-cli 0.145.0`.
 - Discovery: passed from an isolated Codex home after direct copy; the agent found all five canonical skills.
 - Direct-copy installer: dry run and copy passed into `/private/tmp/cmize-codex-project/.agents/skills`; a second legacy-surface copy into `.codex/skills` also passed.
-- Marketplace: local Codex marketplace add and `codex plugin add cmize-skills@cmize-skills --json` passed; installed version `0.1.0`.
+- Marketplace: local Codex `v0.1.0` replay passed marketplace add and `codex plugin add cmize-skills@cmize-skills --json`; installed version `0.1.0`.
 - `auto-review` manual-only control: `src/skills/auto-review/agents/openai.yaml` declares `allow_implicit_invocation: false`; native runtime behavior remains a release-gate check.
 - `actor-critic-mode` manual-only control: `src/skills/actor-critic-mode/agents/openai.yaml` declares `allow_implicit_invocation: false`; the capability probe and evaluation harness self-tests passed, but no named role arm was run.
 - Negative smoke path: explicit adversarial-review and best-practices prompts reported that auto-review was not invoked; this is behavioral evidence, not a security guarantee.

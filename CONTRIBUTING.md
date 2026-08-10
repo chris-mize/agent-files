@@ -4,6 +4,12 @@
 
 The only skill bodies are under `src/skills/<skill-name>/SKILL.md`. Do not add host-specific copies or generated output. Native manifests belong under `src/.claude-plugin/`, `src/.codex-plugin/`, and `src/.cursor-plugin/`; repository marketplace catalogs belong at the repository root.
 
+The authoritative bundle version is
+`.claude-plugin/marketplace.json`'s `metadata.version`. Other manifests may
+repeat the version when their host schema requires it, but validators must
+compare those copies to the canonical marketplace value; scripts must read
+the canonical value rather than define a second version constant.
+
 Each skill must:
 
 - use lowercase letters, numbers, and hyphens in `name`;

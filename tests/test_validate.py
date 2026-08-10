@@ -11,6 +11,7 @@ from scripts.validate import (
     validate_repository,
     validate_skill,
 )
+from scripts.metadata import bundle_version
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -19,6 +20,12 @@ ROOT = Path(__file__).resolve().parents[1]
 class ValidateTests(unittest.TestCase):
     def test_repository_passes(self) -> None:
         self.assertEqual(validate_repository(ROOT), [])
+
+    def test_bundle_version_comes_from_canonical_marketplace_metadata(self) -> None:
+        marketplace = json.loads(
+            (ROOT / ".claude-plugin/marketplace.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(bundle_version(), marketplace["metadata"]["version"])
 
     def test_invalid_frontmatter_fixture_is_rejected(self) -> None:
         text = (ROOT / "tests/fixtures/invalid-frontmatter.md").read_text(

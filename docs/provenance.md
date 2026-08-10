@@ -30,7 +30,9 @@ The bundled skill bodies do not intentionally include copied vendor code, creden
 
 ## Final pre-release audit
 
-Audit result: `pass` for the current candidate whose canonical `src/` fingerprint is `fd9f8e7faa0464668b8c4bbcf50e0536acda956cb5bd6649c1ce7f85885a9eef` (excluding generated Python bytecode).
+Audit result: `pass` for the `1.0.0` release whose canonical `src/`
+fingerprint is `5303672d1d1ab2a57eab8adf05923ea807c066b147b69cef6415d82b803453c9`
+(excluding generated Python bytecode).
 
 - Reviewed all release files for credentials, private records, personal data, and proprietary platform material; no publishable secret or personal record was found.
 - Reviewed external URLs; they point to the public repository or documentation references and do not redistribute third-party source files.

@@ -18,6 +18,7 @@ from scripts.install import (
     update_install,
     _write_manifest,
 )
+from scripts.metadata import bundle_version
 
 
 def make_source(root: Path) -> Path:
@@ -144,6 +145,8 @@ class InstallTests(unittest.TestCase):
                 manifest_path(destination),
                 build_manifest(source, destination, "claude", plan, False),
             )
+            manifest_text = manifest_path(destination).read_text(encoding="utf-8")
+            self.assertIn(f'"bundle_version": "{bundle_version()}"', manifest_text)
 
             actions = update_install(
                 source,
