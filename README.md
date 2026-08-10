@@ -1,17 +1,23 @@
 # cmize-skills
 
-Portable Agent Skills for adversarial review, review orchestration, pluralistic research, and quality checks.
+Portable Agent Skills for adversarial review, actor-critic quality, review orchestration, pluralistic research, and quality checks.
 
 The public repository is `chris-mize/portable-skills`. The published plugin is named `cmize-skills`. One canonical skill tree lives in [`src/skills/`](src/skills/); Claude Code, Codex, and Cursor metadata point at that same tree. The repository does not generate or maintain copied skill bodies per host.
 
 ## Included skills
 
 - `adversarial-review` — challenge a plan, design, implementation, or decision before approval.
+- `actor-critic-mode` — explicitly run a bounded generator–critic quality mode with fresh verification and receipts.
 - `auto-review` — explicitly run an independent adversarial review and then rewrite or safely fix the bounded artifact.
 - `deep-research` — research across official/primary, real-user, and independent-expert lanes with claim-level evidence.
 - `best-practices` — raise the quality floor for substantive implementation, planning, research, and review work.
 
 `auto-review` is intentionally explicit-only. Prompt text is guidance, not a security boundary; the package uses each host's native manual-invocation metadata where available and release evidence records any remaining gaps.
+
+`actor-critic-mode` is also explicitly invoked. It must stop or report a
+degraded `not_confirmed` state when fresh role dispatch, model identity, or
+required receipts cannot be verified; it does not claim that prompt-only role
+instructions are a host security boundary.
 
 ## Install as a plugin
 
@@ -30,6 +36,7 @@ The plugin-qualified commands are:
 
 ```text
 /cmize-skills:adversarial-review
+/cmize-skills:actor-critic-mode
 /cmize-skills:auto-review
 /cmize-skills:deep-research
 /cmize-skills:best-practices
@@ -44,7 +51,7 @@ codex plugin marketplace add https://github.com/chris-mize/portable-skills.git
 codex plugin add cmize-skills@cmize-skills
 ```
 
-If the installed Codex surface uses the interactive picker, open `/plugins`, select the `cmize-skills` marketplace entry, and enable the plugin. Invoke skills explicitly with `$auto-review`, `$adversarial-review`, `$deep-research`, or `$best-practices`.
+If the installed Codex surface uses the interactive picker, open `/plugins`, select the `cmize-skills` marketplace entry, and enable the plugin. Invoke skills explicitly with `$actor-critic-mode`, `$auto-review`, `$adversarial-review`, `$deep-research`, or `$best-practices`.
 
 ### Cursor
 
@@ -54,7 +61,7 @@ Add the repository marketplace with the Cursor Agent CLI, then select `cmize-ski
 cursor agent plugin marketplace add https://github.com/chris-mize/portable-skills.git
 ```
 
-Select the `cmize-skills` entry and install it. Invoke the installed skills explicitly with `/auto-review`, `/adversarial-review`, `/deep-research`, or `/best-practices`.
+Select the `cmize-skills` entry and install it. Invoke the installed skills explicitly with `/actor-critic-mode`, `/auto-review`, `/adversarial-review`, `/deep-research`, or `/best-practices`.
 
 The exact UI labels and CLI availability are version-dependent; see [`docs/compatibility.md`](docs/compatibility.md) for tested surfaces.
 
@@ -90,10 +97,10 @@ skills, dependency closure, updates, and authoritative uninstall. Selecting
 `auto-review` also installs its required `adversarial-review` dependency.
 
 ```bash
-# Install all four skills for Claude Code (also makes them visible to Cursor).
+# Install all bundled skills for Claude Code (also makes them visible to Cursor).
 python3 scripts/install.py --target claude --all
 
-# Install all four skills for Codex (also makes them visible to Cursor).
+# Install all bundled skills for Codex (also makes them visible to Cursor).
 python3 scripts/install.py --target codex --all
 
 # Preview a Cursor install at an explicit destination.
@@ -163,6 +170,7 @@ src/
 ├── .cursor-plugin/plugin.json
 └── skills/
     ├── adversarial-review/
+    ├── actor-critic-mode/
     ├── auto-review/
     ├── best-practices/
     └── deep-research/

@@ -60,6 +60,10 @@ class Removal:
     path: Path
 
 
+def _is_generated_artifact(path: Path) -> bool:
+    return "__pycache__" in path.parts or path.suffix in {".pyc", ".pyo"}
+
+
 def available_skills(source_root: Path) -> list[str]:
     skills_root = source_root / "skills"
     if not skills_root.is_dir():
@@ -114,6 +118,8 @@ def tree_digest(path: Path) -> str:
     if not path.is_dir():
         raise InstallationError(f"cannot fingerprint missing skill tree: {path}")
     for child in sorted(path.rglob("*"), key=lambda value: str(value.relative_to(path))):
+        if _is_generated_artifact(child):
+            continue
         relative = child.relative_to(path).as_posix()
         digest.update(relative.encode("utf-8"))
         digest.update(b"\0")
@@ -150,6 +156,8 @@ def managed_files(path: Path) -> tuple[ManagedFile, ...]:
         raise InstallationError(f"cannot inventory missing skill tree: {path}")
     files: list[ManagedFile] = []
     for child in sorted(path.rglob("*"), key=lambda value: str(value.relative_to(path))):
+        if _is_generated_artifact(child):
+            continue
         if child.is_symlink():
             kind = "symlink"
         elif child.is_file():
@@ -379,6 +387,8 @@ def build_plan(
 
 def _copy_tree_into(source: Path, destination: Path) -> None:
     for child in sorted(source.iterdir(), key=lambda value: value.name):
+        if _is_generated_artifact(child):
+            continue
         target = destination / child.name
         if child.is_symlink():
             if target.is_symlink():
@@ -429,6 +439,7 @@ def _copy_skill(source: Path, destination: Path, *, symlink: bool) -> None:
             )
         os.symlink(str(source), str(destination), target_is_directory=True)
     else:
+        destination.mkdir(parents=True, exist_ok=True)
         _copy_tree_into(source, destination)
 
 
@@ -472,12 +483,7 @@ def execute_plan(
         plan[0].destination.parent.mkdir(parents=True, exist_ok=True)
     for item in plan:
         item.destination.parent.mkdir(parents=True, exist_ok=True)
-        if item.destination.exists() or item.destination.is_symlink():
-            _copy_skill(item.source, item.destination, symlink=symlink)
-        elif symlink:
-            os.symlink(str(item.source), str(item.destination), target_is_directory=True)
-        else:
-            shutil.copytree(item.source, item.destination, symlinks=True)
+        _copy_skill(item.source, item.destination, symlink=symlink)
     return actions
 
 

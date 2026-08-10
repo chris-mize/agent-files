@@ -1,6 +1,6 @@
 {
   "name": "cmize-skills",
-  "description": "Portable adversarial review, auto-review, deep research, and best-practices workflows.",
+  "description": "Portable adversarial review, actor-critic quality, auto-review, deep research, and best-practices workflows.",
   "version": "0.1.0",
   "author": {
     "name": "Christopher Mize"
@@ -11,7 +11,8 @@
     "agent-skills",
     "review",
     "research",
-    "quality"
+    "quality",
+    "orchestration"
   ],
   "skills": "./skills"
 }

@@ -7,7 +7,7 @@
     {
       "name": "cmize-skills",
       "source": "./src",
-      "description": "Portable adversarial review, auto-review, deep research, and best-practices workflows."
+      "description": "Portable adversarial review, actor-critic quality, auto-review, deep research, and best-practices workflows."
     }
   ]
 }

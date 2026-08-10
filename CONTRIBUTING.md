@@ -26,6 +26,8 @@ Before opening a change:
 ```bash
 python3 scripts/validate.py
 python3 -m unittest discover -s tests -p 'test_*.py'
+python3 src/skills/actor-critic-mode/scripts/capability_probe.py --self-test
+python3 src/skills/actor-critic-mode/scripts/evaluate_runs.py --self-test
 ```
 
 Review relative links, JSON manifests, Codex metadata, provenance, and the
@@ -34,7 +36,9 @@ direct-install dry run. Direct installs must write
 refusal to remove locally modified skills. The uninstaller may unlink only
 manifest-listed files or symlink pointers; it must never remove a skill
 directory or an unlisted user file. Do not add dependencies for checks that
-the standard library can perform.
+the standard library can perform. Actor-critic changes must also pass the
+capability-probe and evaluation-harness self-tests, without treating them as
+evidence that a model improves on real tasks.
 
 ## Provenance
 

@@ -13,6 +13,7 @@ The repository contains the MIT license in [`LICENSE`](../LICENSE), copyright Ch
 - `src/skills/deep-research/SKILL.md` — based on the maintainer's local `$CODEX_HOME/skills/deep-research/SKILL.md`; absolute local paths were removed. Ownership: maintainer-authored. Redistribution: MIT.
 - `src/skills/deep-research/references/protocol/RESEARCH_PROTOCOL.md`, `WORKER_CONTRACT.md`, `EVIDENCE_RUBRIC.md`, `REPORT_CONTRACT.md`, and `FORWARD_TESTS.md` — based on the maintainer's local `$AGENT_SKILLS_HOME/deep-research/` protocol files; links and validator references were rewritten to be package-relative. Ownership: maintainer-authored. Redistribution: MIT.
 - `src/skills/best-practices/SKILL.md` and `references/` — based on the maintainer's local `$CODEX_HOME/skills/best-practices/` files; machine-specific rollback paths were replaced with README-directed instructions. Ownership: maintainer-authored. Redistribution: MIT.
+- `src/skills/actor-critic-mode/SKILL.md`, `references/`, and `scripts/` — based on the maintainer's local actor-critic-mode skill tree; Codex and Cursor invocation differences were normalized into platform references, and local capability paths were removed from the research ledger. Ownership: maintainer-authored. Redistribution: MIT.
 
 ## New integration content
 
@@ -29,13 +30,13 @@ The bundled skill bodies do not intentionally include copied vendor code, creden
 
 ## Final pre-release audit
 
-Audit result: `pass` for the release candidate whose canonical `src/` fingerprint is `404867decdfe3d8305206520560052f91a7f53a7e41a3ab2c40db7e53f9c16fb`.
+Audit result: `pass` for the current candidate whose canonical `src/` fingerprint is `fd9f8e7faa0464668b8c4bbcf50e0536acda956cb5bd6649c1ce7f85885a9eef` (excluding generated Python bytecode).
 
 - Reviewed all release files for credentials, private records, personal data, and proprietary platform material; no publishable secret or personal record was found.
 - Reviewed external URLs; they point to the public repository or documentation references and do not redistribute third-party source files.
 - Confirmed the only machine-path examples are intentional validator fixtures and documented install destinations outside `src/skills`.
 - Confirmed no generated skill bodies, build artifacts, icons, or untracked runtime outputs are part of the release candidate.
-- Confirmed every migrated skill and protocol file is covered by the ownership and redistribution entries above.
+- Confirmed every migrated skill and protocol file, including actor-critic-mode, is covered by the ownership and redistribution entries above.
 - A fresh independent release review found no actionable provenance, schema, portability, or release-gate findings. Claude unavailability and blocked deep-research capabilities remain documented residual gaps.
 
 This audit is evidence for the candidate only; repeat it if canonical `src/` content changes after the fingerprint is recorded.

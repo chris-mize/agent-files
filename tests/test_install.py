@@ -68,6 +68,21 @@ class InstallTests(unittest.TestCase):
             self.assertTrue((destination / "alpha/SKILL.md").is_file())
             self.assertFalse((destination / "beta").exists())
 
+    def test_generated_python_artifacts_are_not_installed(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source = make_source(root)
+            generated = source / "skills" / "alpha" / "__pycache__" / "fixture.pyc"
+            generated.parent.mkdir()
+            generated.write_bytes(b"bytecode")
+            destination = root / "destination"
+            plan = build_plan(source, destination, ["alpha"])
+            execute_plan(plan)
+            self.assertFalse((destination / "alpha" / "__pycache__").exists())
+            manifest = build_manifest(source, destination, "claude", plan, False)
+            files = manifest["managed_skills"][0]["files"]
+            self.assertNotIn("__pycache__/fixture.pyc", {item["path"] for item in files})
+
     def test_existing_destination_requires_explicit_replace(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

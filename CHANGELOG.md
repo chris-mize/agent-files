@@ -11,6 +11,9 @@ All notable changes to the `cmize-skills` bundle are recorded here. The bundle u
   standalone manifest-only uninstaller that preserves skill directories and
   unlisted user files.
 - Cross-host installation guidance that avoids duplicate Cursor discovery.
+- `actor-critic-mode`, a bounded generator–critic operating mode with
+  host-specific invocation references, capability probing, receipt validation,
+  and a sanitized evaluation harness.
 
 ## [0.1.0] - 2026-08-10
 

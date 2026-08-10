@@ -13,6 +13,7 @@ from typing import Any
 
 EXPECTED_SKILLS = {
     "adversarial-review",
+    "actor-critic-mode",
     "auto-review",
     "deep-research",
     "best-practices",
@@ -59,7 +60,7 @@ LINK_RE = re.compile(r"\]\(([^)\s]+)(?:\s+['\"][^'\"]*['\"])?\)")
 MACHINE_PATH_RE = re.compile(
     r"(?:/Users/|/home/|/private/(?:var|tmp)/|/(?:tmp|var)/|"
     r"~/(?:\.codex|\.claude|\.cursor|\.agents|\.config)|"
-    r"(?:[A-Za-z]:[\\/]|\\\\))"
+    r"(?<![A-Za-z])[A-Za-z]:[\\/]|\\\\)"
 )
 WINDOWS_PATH_RE = re.compile(r"^(?:[A-Za-z]:[\\/]|\\\\)")
 
@@ -155,6 +156,8 @@ def validate_skill(skill_dir: Path, root: Path) -> list[str]:
 
     for path in skill_dir.rglob("*"):
         if not path.is_file():
+            continue
+        if "__pycache__" in path.parts or path.suffix in {".pyc", ".pyo"}:
             continue
         try:
             contents = path.read_text(encoding="utf-8")
@@ -309,6 +312,7 @@ def _validate_marketplace(path: Path, root: Path, errors: list[str]) -> None:
 def _validate_codex_policy(root: Path, errors: list[str]) -> None:
     expected = {
         root / "src/skills/auto-review/agents/openai.yaml": False,
+        root / "src/skills/actor-critic-mode/agents/openai.yaml": False,
         root / "src/skills/deep-research/agents/openai.yaml": True,
     }
     for path, expected_value in expected.items():

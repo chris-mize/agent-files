@@ -9,7 +9,7 @@ This file records tested installation surfaces, host versions, commands, evidenc
 - `blocked`: a required capability is absent or a native control cannot be verified.
 - `untested`: the package may be structurally valid, but no runtime evidence has been recorded.
 
-`auto-review` additionally requires explicit-only native behavior and one genuinely independent reviewer. `deep-research` additionally requires fresh isolated workers with representative official, user-experience, and expert web access.
+`auto-review` additionally requires explicit-only native behavior and one genuinely independent reviewer. `actor-critic-mode` additionally requires fresh generator/critic dispatch, exact model and receipt evidence, and a fail-closed capability probe. `deep-research` additionally requires fresh isolated workers with representative official, user-experience, and expert web access.
 
 ## Cross-host direct-copy guidance
 
@@ -35,9 +35,9 @@ skills](https://docs.anthropic.com/en/docs/claude-code/skills).
 
 ## Release-candidate identity and command ledger
 
-- Candidate bundle: `cmize-skills` `0.1.0`.
-- Source identity: canonical `src/` content fingerprint `404867decdfe3d8305206520560052f91a7f53a7e41a3ab2c40db7e53f9c16fb`; the release commit is recorded by the `v0.1.0` tag after this candidate is committed.
-- Static gates: `python3 scripts/validate.py` passed; `python3 -m unittest discover -s tests -p 'test_*.py'` passed with 19 tests.
+- Candidate bundle: `cmize-skills` `0.1.0` with the unreleased `actor-critic-mode` addition.
+- Source identity: current canonical `src/` content fingerprint `fd9f8e7faa0464668b8c4bbcf50e0536acda956cb5bd6649c1ce7f85885a9eef` (excluding generated Python bytecode); the prior tagged `v0.1.0` release used the earlier fingerprint recorded in its release evidence.
+- Static gates: `python3 scripts/validate.py` passed; `python3 -m unittest discover -s tests -p 'test_*.py'` passed with 26 tests; actor-critic capability and evaluation harness self-tests passed.
 - Codex plugin catalog: `CODEX_HOME=/tmp/cmize-codex-market-replay-2/.codex codex plugin marketplace add "$PWD" --json` followed by `CODEX_HOME=/tmp/cmize-codex-market-replay-2/.codex codex plugin add cmize-skills@cmize-skills --json` passed from the repository root; installed version was `0.1.0`.
 - Codex explicit skills: an isolated project `.agents/skills` install explicitly invoked `adversarial-review` and `best-practices`; both reported findings without edits.
 - Codex explicit auto-review: one separate reviewer was launched and returned `insufficient evidence` for the intentionally underspecified smoke plan; no files were edited. Prompts explicitly using other skills did not invoke auto-review.
@@ -49,11 +49,13 @@ skills](https://docs.anthropic.com/en/docs/claude-code/skills).
 
 ### Exact replay commands
 
-Run these from the repository root. The recorded results were bound to source fingerprint `404867decdfe3d8305206520560052f91a7f53a7e41a3ab2c40db7e53f9c16fb`; the temporary destinations were clean before each copy.
+Run these from the repository root. The recorded results were bound to the current source fingerprint listed above; the temporary destinations were clean before each copy.
 
 ```bash
 python3 scripts/validate.py
 python3 -m unittest discover -s tests -p 'test_*.py'
+python3 src/skills/actor-critic-mode/scripts/capability_probe.py --self-test
+python3 src/skills/actor-critic-mode/scripts/evaluate_runs.py --self-test
 python3 scripts/install.py --target claude --destination /tmp/cmize-skills-clean-claude --dry-run
 python3 scripts/install.py --target claude --destination /tmp/cmize-skills-clean-claude
 python3 scripts/install.py --target codex --destination /tmp/cmize-codex-project-replay/.agents/skills --dry-run
@@ -62,7 +64,7 @@ python3 scripts/install.py --target cursor --destination /tmp/cmize-skills-clean
 python3 scripts/install.py --target cursor --destination /tmp/cmize-skills-clean-cursor
 ```
 
-Results: validator passed; 19 unit tests passed; all three direct dry-run/copy pairs passed. The isolated Codex home used below was preconfigured for the test account outside this repository; no credentials are stored here.
+Results: validator passed; 26 unit tests and both actor-critic harness self-tests passed; all three direct dry-run/copy pairs passed. The isolated Codex home used below was preconfigured for the test account outside this repository; no credentials are stored here.
 
 ### Direct-install manifest lifecycle replay
 
@@ -84,7 +86,7 @@ preserving every skill directory.
 python3 scripts/install.py --target codex --destination /tmp/cmize-codex-project/.agents/skills
 ```
 
-Result: the canonical four-skill tree was copied into the Codex project discovery directory used by the explicit skill smoke test.
+Result: the canonical five-skill tree was copied into the Codex project discovery directory used by the explicit skill smoke test.
 
 ```bash
 CODEX_HOME=/tmp/cmize-codex-market-replay-2/.codex \
@@ -182,6 +184,7 @@ Commands:
 /plugin marketplace add https://github.com/chris-mize/portable-skills.git
 /plugin install cmize-skills@cmize-skills
 /cmize-skills:adversarial-review
+/cmize-skills:actor-critic-mode
 /cmize-skills:auto-review
 /cmize-skills:deep-research
 /cmize-skills:best-practices
@@ -193,6 +196,7 @@ Evidence record:
 - Discovery: not testable without Claude Code.
 - Direct-copy installer: dry run and copy passed into `/private/tmp/cmize-skills-clean-claude`.
 - `auto-review` manual-only control: `disable-model-invocation: true` is present; native runtime behavior remains a release-gate check.
+- `actor-critic-mode`: package-shape and harness self-tests passed; fresh role dispatch and host receipt behavior were not replayed on Claude Code.
 - Independent reviewer: not testable.
 - `deep-research` web/isolation: not testable.
 - Result: `blocked` for host support; package-shape support is covered by static validation only.
@@ -218,15 +222,16 @@ codex plugin add cmize-skills@cmize-skills
 Evidence record:
 
 - Version: `codex-cli 0.145.0`.
-- Discovery: passed from an isolated Codex home after direct copy; the agent found all four canonical skills.
+- Discovery: passed from an isolated Codex home after direct copy; the agent found all five canonical skills.
 - Direct-copy installer: dry run and copy passed into `/private/tmp/cmize-codex-project/.agents/skills`; a second legacy-surface copy into `.codex/skills` also passed.
 - Marketplace: local Codex marketplace add and `codex plugin add cmize-skills@cmize-skills --json` passed; installed version `0.1.0`.
 - `auto-review` manual-only control: `src/skills/auto-review/agents/openai.yaml` declares `allow_implicit_invocation: false`; native runtime behavior remains a release-gate check.
+- `actor-critic-mode` manual-only control: `src/skills/actor-critic-mode/agents/openai.yaml` declares `allow_implicit_invocation: false`; the capability probe and evaluation harness self-tests passed, but no named role arm was run.
 - Negative smoke path: explicit adversarial-review and best-practices prompts reported that auto-review was not invoked; this is behavioral evidence, not a security guarantee.
 - Independent reviewer: explicit single-pass smoke test launched one separate worker and returned `insufficient evidence`; no files were edited.
 - `deep-research` web/isolation: canonical Light run preflight passed with 3/3 distinct workers and all three lanes; 3/3 research workers completed, but the required critique failed after two thread-limit launch attempts. The run is `terminal coverage failure`, so deep-research is not claimed fully supported.
 - Residual host issue: Codex emitted a model-cache schema warning in one run and later a model-refresh timeout; the successful skill and marketplace gates were unaffected.
-- Result: `partial`; adversarial-review, auto-review, and best-practices passed explicit smoke tests, while deep-research remains blocked by its required critique-stage capability.
+- Result: `partial`; adversarial-review, auto-review, and best-practices passed explicit smoke tests, actor-critic-mode passed package self-tests but has no named role-arm evidence, and deep-research remains blocked by its required critique-stage capability.
 
 ## Cursor
 
@@ -252,6 +257,7 @@ Then install `cmize-skills` from Cursor's Plugins/marketplaces UI:
 
 ```text
 /adversarial-review
+/actor-critic-mode
 /auto-review
 /deep-research
 /best-practices
@@ -263,10 +269,11 @@ Evidence record:
 - Discovery: passed with `cursor agent --plugin-dir .../src`; the agent found `cmize-skills` and the requested skills.
 - Direct-copy installer: dry run and copy passed into `/private/tmp/cmize-skills-clean-cursor`.
 - `auto-review` manual-only control: `disable-model-invocation: true` is present; native runtime behavior remains a release-gate check.
+- `actor-critic-mode`: package-shape and harness self-tests passed; no named role arm was run in this Cursor replay.
 - Negative smoke path: explicit adversarial-review and best-practices prompts reported that auto-review was not invoked; this is behavioral evidence, not a security guarantee.
 - Independent reviewer: explicit single-pass smoke test launched a separate Cursor subagent and returned `not ready`; no files were edited.
 - `deep-research` web/isolation: Light preflight launched 3 probes, 2 completed and 1 failed; no research workers launched because official access was blocked and public-user access was restricted. The skill correctly returned `blocked — capability gap`.
-- Result: `partial`; adversarial-review, auto-review, and best-practices passed explicit smoke tests, while deep-research is correctly blocked for this environment.
+- Result: `partial`; adversarial-review, auto-review, and best-practices passed explicit smoke tests, actor-critic-mode passed package self-tests but has no named role-arm evidence, and deep-research is correctly blocked for this environment.
 
 ## Direct-install evidence
 
