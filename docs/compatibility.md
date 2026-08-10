@@ -183,7 +183,7 @@ Evidence record:
 - Marketplace: local Codex marketplace add and `codex plugin add cmize-skills@cmize-skills --json` passed; installed version `0.1.0`.
 - `auto-review` manual-only control: `src/skills/auto-review/agents/openai.yaml` declares `allow_implicit_invocation: false`; native runtime behavior remains a release-gate check.
 - Negative smoke path: explicit adversarial-review and best-practices prompts reported that auto-review was not invoked; this is behavioral evidence, not a security guarantee.
-- Independent reviewer: explicit single-pass smoke test launched one separate worker and returned `not ready`; no files were edited.
+- Independent reviewer: explicit single-pass smoke test launched one separate worker and returned `insufficient evidence`; no files were edited.
 - `deep-research` web/isolation: canonical Light run preflight passed with 3/3 distinct workers and all three lanes; 3/3 research workers completed, but the required critique failed after two thread-limit launch attempts. The run is `terminal coverage failure`, so deep-research is not claimed fully supported.
 - Residual host issue: Codex emitted a model-cache schema warning in one run and later a model-refresh timeout; the successful skill and marketplace gates were unaffected.
 - Result: `partial`; adversarial-review, auto-review, and best-practices passed explicit smoke tests, while deep-research remains blocked by its required critique-stage capability.
@@ -219,7 +219,7 @@ Evidence record:
 - Direct-copy installer: dry run and copy passed into `/private/tmp/cmize-skills-clean-cursor`.
 - `auto-review` manual-only control: `disable-model-invocation: true` is present; native runtime behavior remains a release-gate check.
 - Negative smoke path: explicit adversarial-review and best-practices prompts reported that auto-review was not invoked; this is behavioral evidence, not a security guarantee.
-- Independent reviewer: explicit single-pass smoke test launched a separate Cursor subagent and returned `insufficient evidence`; no files were edited.
+- Independent reviewer: explicit single-pass smoke test launched a separate Cursor subagent and returned `not ready`; no files were edited.
 - `deep-research` web/isolation: Light preflight launched 3 probes, 2 completed and 1 failed; no research workers launched because official access was blocked and public-user access was restricted. The skill correctly returned `blocked — capability gap`.
 - Result: `partial`; adversarial-review, auto-review, and best-practices passed explicit smoke tests, while deep-research is correctly blocked for this environment.
 
