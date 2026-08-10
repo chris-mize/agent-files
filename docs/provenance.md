@@ -19,7 +19,9 @@ The repository contains the MIT license in [`LICENSE`](../LICENSE), copyright Ch
 - `src/.claude-plugin/plugin.json`, `src/.codex-plugin/plugin.json`, and `src/.cursor-plugin/plugin.json` — new maintainer-authored manifests.
 - `.claude-plugin/marketplace.json`, `.agents/plugins/marketplace.json`, and `.cursor-plugin/marketplace.json` — new maintainer-authored marketplace catalogs.
 - `src/skills/*/references/platforms/` and Codex `agents/openai.yaml` files — new maintainer-authored host integration metadata, based on the documented host schemas named in the README.
-- `scripts/`, `tests/`, `.github/workflows/`, and all top-level documentation — new maintainer-authored release tooling and documentation.
+- `scripts/`, `tests/`, `.github/workflows/`, and all top-level documentation —
+  new maintainer-authored release tooling and documentation, including the
+  manifest-backed direct-install lifecycle.
 
 ## Third-party material and audit result
 

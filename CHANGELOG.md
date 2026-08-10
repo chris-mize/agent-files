@@ -2,6 +2,14 @@
 
 All notable changes to the `cmize-skills` bundle are recorded here. The bundle uses one release version; individual skills do not have independent versions.
 
+## Unreleased
+
+### Added
+
+- Manifest-backed direct installs with safe updates, partial or full
+  uninstalls, local-edit detection, and explicit override flags.
+- Cross-host installation guidance that avoids duplicate Cursor discovery.
+
 ## [0.1.0] - 2026-08-10
 
 ### Added

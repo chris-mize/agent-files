@@ -11,11 +11,33 @@ This file records tested installation surfaces, host versions, commands, evidenc
 
 `auto-review` additionally requires explicit-only native behavior and one genuinely independent reviewer. `deep-research` additionally requires fresh isolated workers with representative official, user-experience, and expert web access.
 
+## Cross-host direct-copy guidance
+
+Cursor's documented compatibility discovery includes Claude and Codex skill
+directories in addition to its own directories. A direct install therefore
+does not need one copy per host:
+
+- Claude Code + Cursor: use one manifest-owned install at `~/.claude/skills`;
+  do not also install the same skills at `~/.cursor/skills`.
+- Codex + Cursor: use one manifest-owned install at `~/.agents/skills`; do
+  not also install the same skills at `~/.cursor/skills`.
+- All three hosts: use the Claude destination for Claude Code and Cursor, and
+  install the Codex plugin through Codex's plugin manager. This avoids a
+  second direct copy in a Cursor-visible directory.
+
+Use either a host plugin install or direct copy for a given host/name pair.
+Plugin managers own their copies; direct installs are owned by
+`.cmize-skills-manifest.json` in the destination directory.
+
+Path references: [Cursor skills](https://cursor.com/docs/skills),
+[Codex skills](https://developers.openai.com/codex/skills), and [Claude Code
+skills](https://docs.anthropic.com/en/docs/claude-code/skills).
+
 ## Release-candidate identity and command ledger
 
 - Candidate bundle: `cmize-skills` `0.1.0`.
 - Source identity: canonical `src/` content fingerprint `404867decdfe3d8305206520560052f91a7f53a7e41a3ab2c40db7e53f9c16fb`; the release commit is recorded by the `v0.1.0` tag after this candidate is committed.
-- Static gates: `python3 scripts/validate.py` passed; `python3 -m unittest discover -s tests -p 'test_*.py'` passed with 11 tests.
+- Static gates: `python3 scripts/validate.py` passed; `python3 -m unittest discover -s tests -p 'test_*.py'` passed with 17 tests.
 - Codex plugin catalog: `CODEX_HOME=/tmp/cmize-codex-market-replay-2/.codex codex plugin marketplace add "$PWD" --json` followed by `CODEX_HOME=/tmp/cmize-codex-market-replay-2/.codex codex plugin add cmize-skills@cmize-skills --json` passed from the repository root; installed version was `0.1.0`.
 - Codex explicit skills: an isolated project `.agents/skills` install explicitly invoked `adversarial-review` and `best-practices`; both reported findings without edits.
 - Codex explicit auto-review: one separate reviewer was launched and returned `insufficient evidence` for the intentionally underspecified smoke plan; no files were edited. Prompts explicitly using other skills did not invoke auto-review.
@@ -40,7 +62,22 @@ python3 scripts/install.py --target cursor --destination /tmp/cmize-skills-clean
 python3 scripts/install.py --target cursor --destination /tmp/cmize-skills-clean-cursor
 ```
 
-Results: validator passed; 11 unit tests passed; all three direct dry-run/copy pairs passed. The isolated Codex home used below was preconfigured for the test account outside this repository; no credentials are stored here.
+Results: validator passed; 17 unit tests passed; all three direct dry-run/copy pairs passed. The isolated Codex home used below was preconfigured for the test account outside this repository; no credentials are stored here.
+
+### Direct-install manifest lifecycle replay
+
+```bash
+python3 scripts/install.py --target claude --destination /tmp/cmize-skills-manifest-replay --all --dry-run
+python3 scripts/install.py --target claude --destination /tmp/cmize-skills-manifest-replay --all
+python3 scripts/install.py --target claude --destination /tmp/cmize-skills-manifest-replay --update --dry-run
+python3 scripts/install.py --target claude --destination /tmp/cmize-skills-manifest-replay --update
+python3 scripts/install.py --target claude --destination /tmp/cmize-skills-manifest-replay --uninstall --dry-run
+python3 scripts/install.py --target claude --destination /tmp/cmize-skills-manifest-replay --uninstall
+```
+
+Result: all six commands passed; the install wrote
+`.cmize-skills-manifest.json`, update replaced only manifest-owned skills, and
+uninstall removed those skills and the manifest.
 
 ```bash
 python3 scripts/install.py --target codex --destination /tmp/cmize-codex-project/.agents/skills
@@ -136,6 +173,7 @@ Installation surfaces:
 - plugin root: `src/.claude-plugin/plugin.json`;
 - direct personal skills: `~/.claude/skills`;
 - direct project skills: `<project>/.claude/skills`.
+- direct-copy ownership record: `<skills directory>/.cmize-skills-manifest.json`.
 
 Commands:
 
@@ -167,6 +205,7 @@ Installation surfaces:
 - direct personal skills: `~/.agents/skills`;
 - legacy personal skills: `~/.codex/skills`;
 - direct project skills: `<project>/.agents/skills` (or the legacy `.codex/skills`).
+- direct-copy ownership record: `<skills directory>/.cmize-skills-manifest.json`.
 
 Commands:
 
@@ -195,7 +234,12 @@ Installation surfaces:
 - marketplace: root `.cursor-plugin/marketplace.json` points to `./src`;
 - plugin root: `src/.cursor-plugin/plugin.json`;
 - direct personal skills: `~/.cursor/skills`;
-- direct project skills: `<project>/.cursor/skills`.
+- compatibility personal skills: `~/.agents/skills`, `~/.claude/skills`, and
+  `~/.codex/skills`;
+- direct project skills: `<project>/.cursor/skills`;
+- compatibility project skills: `<project>/.agents/skills`,
+  `<project>/.claude/skills`, and `<project>/.codex/skills`.
+- direct-copy ownership record: `<skills directory>/.cmize-skills-manifest.json`.
 
 Commands and UI:
 
@@ -225,7 +269,11 @@ Evidence record:
 
 ## Direct-install evidence
 
-The repository validator and installer unit tests are host-independent. They prove package shape, link integrity, refusal to overwrite by default, selected-skill behavior, dry-run behavior, replacement, and symlink handling. They do not prove that a host discovers or invokes a copied skill.
+The repository validator and installer unit tests are host-independent. They
+prove package shape, link integrity, refusal to overwrite by default,
+selected-skill behavior, dry-run behavior, replacement, symlink handling,
+manifest creation, update, local-edit detection, and authoritative
+uninstall. They do not prove that a host discovers or invokes a copied skill.
 
 The clean-install gate must record:
 

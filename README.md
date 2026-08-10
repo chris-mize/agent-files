@@ -58,27 +58,95 @@ Select the `cmize-skills` entry and install it. Invoke the installed skills expl
 
 The exact UI labels and CLI availability are version-dependent; see [`docs/compatibility.md`](docs/compatibility.md) for tested surfaces.
 
+### Avoiding duplicate discovery
+
+Use one distribution method per host: either install the plugin through that
+host's plugin manager or use the direct-copy installer. Do not install the same
+skills both ways.
+
+Cursor also discovers user-level skills from `~/.agents/skills/` and
+`~/.cursor/skills/`, and for compatibility from `~/.claude/skills/` and
+`~/.codex/skills/`. That means a direct copy can serve more than one host:
+
+- **Claude Code + Cursor:** install once to `~/.claude/skills/`; do not also
+  install to `~/.cursor/skills/`.
+- **Codex + Cursor:** install once to `~/.agents/skills/`; do not also install
+  to `~/.cursor/skills/`.
+- **All three:** install directly to `~/.claude/skills/` for Claude Code and
+  Cursor, then install the Codex plugin through Codex's plugin manager. This
+  keeps a second direct copy out of Cursor's discovery paths.
+
+If you choose plugins, install `cmize-skills` separately through each host's
+native plugin UI or CLI and do not use the direct installer for those same
+host/name pairs. Plugin managers own their installed copies and their
+update/uninstall lifecycle.
+
 ## Direct-copy fallback
 
-The dependency-free installer synchronizes the canonical skill directories into a host skill directory. It never generates a second skill body, refuses to overwrite an existing destination by default, and supports dry runs, selected skills, and dependency closure. Selecting `auto-review` also installs its required `adversarial-review` dependency.
+The dependency-free installer synchronizes the canonical skill directories into
+a host skill directory. It never generates a second skill body, refuses to
+overwrite an existing destination by default, and supports dry runs, selected
+skills, dependency closure, updates, and authoritative uninstall. Selecting
+`auto-review` also installs its required `adversarial-review` dependency.
 
 ```bash
-# Preview all four skills for Codex.
-python3 scripts/install.py --target codex --dry-run
+# Install all four skills for Claude Code (also makes them visible to Cursor).
+python3 scripts/install.py --target claude --all
 
-# Copy only the review pair into Claude Code's personal skills directory.
-python3 scripts/install.py --target claude --skills adversarial-review auto-review
+# Install all four skills for Codex (also makes them visible to Cursor).
+python3 scripts/install.py --target codex --all
 
 # Preview a Cursor install at an explicit destination.
-python3 scripts/install.py --target cursor --destination /path/to/skills --dry-run
+python3 scripts/install.py --target cursor --destination /path/to/skills --all --dry-run
+
+# Copy only the review pair into a fresh destination.
+python3 scripts/install.py --target claude --skills adversarial-review auto-review
 
 # Symlink selected skills after inspecting the dry run.
 python3 scripts/install.py --target codex --skills deep-research best-practices --symlink
 ```
 
-Default personal destinations are `~/.claude/skills`, `~/.agents/skills`, and `~/.cursor/skills`. Codex also discovers the legacy `~/.codex/skills` location; pass `--destination ~/.codex/skills` when that is the intended surface. Use `--destination` for a project-local directory such as `.claude/skills`, `.agents/skills`, `.codex/skills`, or `.cursor/skills`. The destination must be a skills directory, not the plugin root.
+Omitting `--all` and `--skills` also selects every skill for a fresh install.
+Default personal destinations are `~/.claude/skills`, `~/.agents/skills`, and
+`~/.cursor/skills`. Codex also discovers the legacy `~/.codex/skills` location;
+pass `--destination ~/.codex/skills` when that is the intended surface. Use
+`--destination` for a project-local directory such as `.claude/skills`,
+`.agents/skills`, `.codex/skills`, or `.cursor/skills`. The destination must be
+a skills directory, not the plugin root.
 
-To update a direct install, rerun the command with `--replace` after reviewing the dry run. To roll back, remove only the installed `cmize-skills` skill directories after confirming they are not shared with another bundle, then restore the prior version from its source or version-control checkout.
+Every successful direct install writes
+`<destination>/.cmize-skills-manifest.json`. The manifest records the bundle
+version, source fingerprint, installation mode, and the exact skill directories
+owned by this installer. It prevents an update or uninstall from touching
+unmanaged skills, removes managed skills that disappear from the source on
+update, and detects local edits before destructive operations.
+
+```bash
+# Preview and then update the manifest-owned install.
+python3 scripts/install.py --target claude --update --dry-run
+python3 scripts/install.py --target claude --update
+
+# If a managed skill was intentionally edited, review it before replacing it.
+python3 scripts/install.py --target claude --update --replace
+
+# Preview and then remove every skill owned by this manifest.
+python3 scripts/install.py --target claude --uninstall --dry-run
+python3 scripts/install.py --target claude --uninstall
+
+# Remove only one managed skill; the manifest remains for the others.
+python3 scripts/install.py --target claude --uninstall --skills best-practices
+
+# Explicitly remove a managed skill even if it has local edits.
+python3 scripts/install.py --target claude --uninstall --force
+```
+
+Partial uninstall refuses to remove `adversarial-review` while
+`auto-review` remains managed, because that would leave a broken dependency.
+
+The installer refuses to claim an existing unmanaged install unless
+`--replace` is explicitly supplied during a fresh install. For a project-local
+destination, repeat the same `--target` and `--destination` on every update or
+uninstall command.
 
 ## Package layout
 
