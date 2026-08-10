@@ -31,8 +31,10 @@ python3 -m unittest discover -s tests -p 'test_*.py'
 Review relative links, JSON manifests, Codex metadata, provenance, and the
 direct-install dry run. Direct installs must write
 `.cmize-skills-manifest.json`; test update and uninstall behavior, including
-refusal to remove locally modified skills. Do not add dependencies for checks
-that the standard library can perform.
+refusal to remove locally modified skills. The uninstaller may unlink only
+manifest-listed files or symlink pointers; it must never remove a skill
+directory or an unlisted user file. Do not add dependencies for checks that
+the standard library can perform.
 
 ## Provenance
 

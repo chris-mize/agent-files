@@ -11,11 +11,12 @@ import shutil
 import sys
 from datetime import datetime, timezone
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 
 MANIFEST_NAME = ".cmize-skills-manifest.json"
-MANIFEST_SCHEMA_VERSION = 1
+MANIFEST_SCHEMA_VERSION = 2
+SUPPORTED_MANIFEST_SCHEMAS = {1, MANIFEST_SCHEMA_VERSION}
 BUNDLE_NAME = "cmize-skills"
 BUNDLE_VERSION = "0.1.0"
 TARGET_DESTINATIONS = {
@@ -39,10 +40,24 @@ class InstallItem:
 
 
 @dataclass(frozen=True)
+class ManagedFile:
+    path: str
+    kind: str
+    digest: str
+
+
+@dataclass(frozen=True)
 class ManagedEntry:
     name: str
     path: str
     digest: str
+    files: tuple[ManagedFile, ...] = ()
+
+
+@dataclass(frozen=True)
+class Removal:
+    kind: str
+    path: Path
 
 
 def available_skills(source_root: Path) -> list[str]:
@@ -113,6 +128,61 @@ def tree_digest(path: Path) -> str:
     return digest.hexdigest()
 
 
+def file_digest(path: Path) -> str:
+    digest = hashlib.sha256()
+    if path.is_symlink():
+        digest.update(b"symlink\0")
+        digest.update(os.readlink(path).encode("utf-8"))
+    elif path.is_file():
+        digest.update(b"file\0")
+        digest.update(path.read_bytes())
+    else:
+        raise InstallationError(f"cannot fingerprint unsupported file: {path}")
+    return digest.hexdigest()
+
+
+def managed_files(path: Path) -> tuple[ManagedFile, ...]:
+    """Return the files a copied skill contributes, never directories."""
+
+    if path.is_symlink():
+        return ()
+    if not path.is_dir():
+        raise InstallationError(f"cannot inventory missing skill tree: {path}")
+    files: list[ManagedFile] = []
+    for child in sorted(path.rglob("*"), key=lambda value: str(value.relative_to(path))):
+        if child.is_symlink():
+            kind = "symlink"
+        elif child.is_file():
+            kind = "file"
+        else:
+            continue
+        files.append(
+            ManagedFile(
+                path=child.relative_to(path).as_posix(),
+                kind=kind,
+                digest=file_digest(child),
+            )
+        )
+    return tuple(files)
+
+
+def _validate_relative_file_path(value: object, manifest_path_value: Path) -> str:
+    if not isinstance(value, str) or not value or "\\" in value:
+        raise InstallationError(
+            f"manifest contains an invalid file path: {manifest_path_value}"
+        )
+    relative = PurePosixPath(value)
+    if (
+        relative.is_absolute()
+        or str(relative) != value
+        or any(part in {"", ".", ".."} for part in relative.parts)
+    ):
+        raise InstallationError(
+            f"manifest contains an invalid file path: {manifest_path_value}"
+        )
+    return value
+
+
 def manifest_path(destination: Path) -> Path:
     return destination.expanduser().resolve() / MANIFEST_NAME
 
@@ -130,7 +200,8 @@ def _load_manifest(destination: Path) -> dict:
         raise InstallationError(f"cannot read install manifest {path}: {exc}") from exc
     if not isinstance(data, dict) or data.get("bundle") != BUNDLE_NAME:
         raise InstallationError(f"manifest is not owned by {BUNDLE_NAME}: {path}")
-    if data.get("schema_version") != MANIFEST_SCHEMA_VERSION:
+    schema_version = data.get("schema_version")
+    if schema_version not in SUPPORTED_MANIFEST_SCHEMAS:
         raise InstallationError(f"unsupported manifest schema: {path}")
     if data.get("mode") not in {"copy", "symlink"}:
         raise InstallationError(f"manifest has an invalid installation mode: {path}")
@@ -157,6 +228,26 @@ def _load_manifest(destination: Path) -> dict:
             or not digest
         ):
             raise InstallationError(f"manifest contains an invalid skill entry: {path}")
+        if schema_version >= MANIFEST_SCHEMA_VERSION and "files" not in entry:
+            raise InstallationError(f"manifest is missing its file inventory: {path}")
+        files = entry.get("files", [])
+        if not isinstance(files, list):
+            raise InstallationError(f"manifest contains an invalid file list: {path}")
+        seen_files: set[str] = set()
+        for file_entry in files:
+            if not isinstance(file_entry, dict):
+                raise InstallationError(f"manifest contains an invalid file entry: {path}")
+            file_path = _validate_relative_file_path(file_entry.get("path"), path)
+            kind = file_entry.get("kind")
+            file_digest_value = file_entry.get("digest")
+            if (
+                kind not in {"file", "symlink"}
+                or not isinstance(file_digest_value, str)
+                or not file_digest_value
+                or file_path in seen_files
+            ):
+                raise InstallationError(f"manifest contains an invalid file entry: {path}")
+            seen_files.add(file_path)
         seen.add(name)
     return data
 
@@ -167,6 +258,14 @@ def _manifest_entries(data: dict) -> dict[str, ManagedEntry]:
             name=entry["name"],
             path=entry["path"],
             digest=entry["digest"],
+            files=tuple(
+                ManagedFile(
+                    path=file_entry["path"],
+                    kind=file_entry["kind"],
+                    digest=file_entry["digest"],
+                )
+                for file_entry in entry.get("files", [])
+            ),
         )
         for entry in data["managed_skills"]
     }
@@ -181,6 +280,43 @@ def _write_manifest(path: Path, data: dict) -> None:
     temporary.replace(path)
 
 
+def _ensure_file_inventory(destination: Path, entry: ManagedEntry) -> ManagedEntry:
+    if entry.files:
+        return entry
+    root = destination / entry.path
+    if root.is_symlink():
+        return entry
+    if not (root.exists() or root.is_symlink()):
+        return entry
+    if tree_digest(root) != entry.digest:
+        raise InstallationError(
+            f"legacy manifest has no safe file inventory for modified skill "
+            f"{entry.name!r}; refusing destructive operation"
+        )
+    return ManagedEntry(
+        name=entry.name,
+        path=entry.path,
+        digest=entry.digest,
+        files=managed_files(root),
+    )
+
+
+def _serialize_entry(entry: ManagedEntry) -> dict:
+    return {
+        "name": entry.name,
+        "path": entry.path,
+        "digest": entry.digest,
+        "files": [
+            {
+                "path": managed_file.path,
+                "kind": managed_file.kind,
+                "digest": managed_file.digest,
+            }
+            for managed_file in entry.files
+        ],
+    }
+
+
 def build_manifest(
     source_root: Path,
     destination: Path,
@@ -189,12 +325,16 @@ def build_manifest(
     symlink: bool,
     existing: dict[str, ManagedEntry] | None = None,
 ) -> dict:
-    entries = dict(existing or {})
+    entries = {
+        name: _ensure_file_inventory(destination, entry)
+        for name, entry in (existing or {}).items()
+    }
     for item in plan:
         entries[item.source.name] = ManagedEntry(
             name=item.source.name,
             path=item.destination.name,
             digest=tree_digest(item.destination),
+            files=managed_files(item.source),
         )
     return {
         "schema_version": MANIFEST_SCHEMA_VERSION,
@@ -206,11 +346,7 @@ def build_manifest(
         "source_skills_digest": tree_digest(source_root / "skills"),
         "mode": "symlink" if symlink else "copy",
         "managed_skills": [
-            {
-                "name": entry.name,
-                "path": entry.path,
-                "digest": entry.digest,
-            }
+            _serialize_entry(entry)
             for entry in sorted(entries.values(), key=lambda value: value.name)
         ],
         "updated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
@@ -241,13 +377,59 @@ def build_plan(
     ]
 
 
-def _remove_existing(path: Path) -> None:
-    if path.is_symlink() or path.is_file():
-        path.unlink()
-    elif path.is_dir():
-        shutil.rmtree(path)
+def _copy_tree_into(source: Path, destination: Path) -> None:
+    for child in sorted(source.iterdir(), key=lambda value: value.name):
+        target = destination / child.name
+        if child.is_symlink():
+            if target.is_symlink():
+                target.unlink()
+            elif target.exists():
+                if target.is_dir():
+                    raise InstallationError(
+                        f"refusing to replace a destination directory with a symlink: "
+                        f"{target}"
+                    )
+                target.unlink()
+            os.symlink(
+                os.readlink(child),
+                target,
+                target_is_directory=child.is_dir(),
+            )
+        elif child.is_dir():
+            if target.is_symlink():
+                raise InstallationError(
+                    f"refusing to copy through a destination symlink: {target}"
+                )
+            if target.exists() and not target.is_dir():
+                raise InstallationError(
+                    f"refusing to replace a destination file with a directory: {target}"
+                )
+            target.mkdir(exist_ok=True)
+            _copy_tree_into(child, target)
+        elif child.is_file():
+            if target.is_symlink() or (target.exists() and target.is_dir()):
+                raise InstallationError(
+                    f"refusing to copy through a destination path: {target}"
+                )
+            shutil.copy2(child, target)
+
+
+def _copy_skill(source: Path, destination: Path, *, symlink: bool) -> None:
+    if destination.is_symlink():
+        destination.unlink()
+    elif destination.exists() and not destination.is_dir():
+        raise InstallationError(
+            f"refusing to replace non-directory skill destination: {destination}"
+        )
+    if symlink:
+        if destination.exists():
+            raise InstallationError(
+                "refusing to replace a skill directory with a symlink; "
+                f"preserve it and remove it manually if intended: {destination}"
+            )
+        os.symlink(str(source), str(destination), target_is_directory=True)
     else:
-        raise InstallationError(f"cannot remove unsupported destination: {path}")
+        _copy_tree_into(source, destination)
 
 
 def execute_plan(
@@ -291,8 +473,8 @@ def execute_plan(
     for item in plan:
         item.destination.parent.mkdir(parents=True, exist_ok=True)
         if item.destination.exists() or item.destination.is_symlink():
-            _remove_existing(item.destination)
-        if symlink:
+            _copy_skill(item.source, item.destination, symlink=symlink)
+        elif symlink:
             os.symlink(str(item.source), str(item.destination), target_is_directory=True)
         else:
             shutil.copytree(item.source, item.destination, symlinks=True)
@@ -318,6 +500,69 @@ def _check_managed_entries(
             )
 
 
+def _plan_removals(
+    destination: Path,
+    entries: dict[str, ManagedEntry],
+    names: list[str],
+) -> list[Removal]:
+    removals: list[Removal] = []
+    for name in names:
+        entry = entries[name]
+        root = destination / entry.path
+        if not (root.exists() or root.is_symlink()):
+            removals.append(Removal("missing", root))
+            continue
+        if root.is_symlink():
+            # Unlink only the pointer; never follow or remove its target.
+            removals.append(Removal("symlink", root))
+            continue
+        if not root.is_dir():
+            raise InstallationError(
+                f"refusing to remove non-directory skill destination: {root}"
+            )
+        inventory = _ensure_file_inventory(destination, entry)
+        root_real = root.resolve()
+        planned_files = 0
+        for managed_file in inventory.files:
+            target = root / managed_file.path
+            parent_real = target.parent.resolve()
+            if parent_real != root_real and root_real not in parent_real.parents:
+                raise InstallationError(
+                    f"manifest file escapes its skill directory: {target}"
+                )
+            if target.is_symlink() or target.is_file():
+                removals.append(Removal("file", target))
+                planned_files += 1
+            elif target.exists():
+                raise InstallationError(
+                    f"refusing to remove a directory listed as a file: {target}"
+                )
+        if not planned_files:
+            removals.append(Removal("preserve", root))
+    return removals
+
+
+def _execute_removals(
+    removals: list[Removal],
+    *,
+    dry_run: bool,
+    operation: str,
+) -> list[str]:
+    prefix = "DRY-RUN" if dry_run else operation
+    actions = [f"{prefix} {removal.kind}: {removal.path}" for removal in removals]
+    if dry_run:
+        return actions
+    for removal in removals:
+        if removal.kind == "file" or removal.kind == "symlink":
+            if removal.path.is_symlink() or removal.path.is_file():
+                removal.path.unlink()
+            elif removal.path.exists():
+                raise InstallationError(
+                    f"refusing to remove a directory: {removal.path}"
+                )
+    return actions
+
+
 def update_install(
     source_root: Path,
     destination: Path,
@@ -334,7 +579,10 @@ def update_install(
         raise InstallationError(
             f"manifest target is {data.get('target')!r}, not {target!r}"
         )
-    existing = _manifest_entries(data)
+    existing = {
+        name: _ensure_file_inventory(destination, entry)
+        for name, entry in _manifest_entries(data).items()
+    }
     explicit_selection = requested is not None
     stored_mode = data["mode"]
     if stored_mode == "symlink" and not symlink:
@@ -384,11 +632,29 @@ def update_install(
         [name for name in selected_names if name in existing],
         force=replace,
     )
-    actions = [
-        f"{'DRY-RUN' if dry_run else 'UPDATE'} remove: "
-        f"{destination / existing[name].path}"
-        for name in sorted(stale_names)
+    stale_removals = _plan_removals(
+        destination,
+        existing,
+        sorted(stale_names),
+    )
+    refresh_names = [
+        name
+        for name in selected_names
+        if name in existing and name not in stale_names
     ]
+    refresh_removals = _plan_removals(destination, existing, refresh_names)
+    actions = _execute_removals(
+        stale_removals,
+        dry_run=dry_run,
+        operation="UPDATE",
+    )
+    actions.extend(
+        _execute_removals(
+            refresh_removals,
+            dry_run=dry_run,
+            operation="UPDATE",
+        )
+    )
     actions.extend(
         execute_plan(
             plan,
@@ -399,10 +665,6 @@ def update_install(
         )
     )
     if not dry_run:
-        for name in stale_names:
-            path = destination / existing[name].path
-            if path.exists() or path.is_symlink():
-                _remove_existing(path)
         managed = {
             name: entry
             for name, entry in existing.items()
@@ -461,33 +723,91 @@ def uninstall(
             + ", ".join(blocked)
         )
     _check_managed_entries(destination, entries, names, force=force)
-    actions: list[str] = []
-    for name in names:
-        path = destination / entries[name].path
-        action = "missing" if not (path.exists() or path.is_symlink()) else "remove"
-        actions.append(f"{'DRY-RUN' if dry_run else 'UNINSTALL'} {action}: {path}")
+    remaining = {name: entry for name, entry in entries.items() if name in remaining_names}
+    normalized = {
+        name: _ensure_file_inventory(destination, entry)
+        for name, entry in remaining.items()
+    }
+    removals = _plan_removals(destination, entries, names)
+    actions = _execute_removals(
+        removals,
+        dry_run=dry_run,
+        operation="UNINSTALL",
+    )
     if dry_run:
         return actions
 
-    for name in names:
-        path = destination / entries[name].path
-        if path.exists() or path.is_symlink():
-            _remove_existing(path)
-    remaining = {name: entry for name, entry in entries.items() if name in remaining_names}
     if remaining:
+        data["schema_version"] = MANIFEST_SCHEMA_VERSION
         data["managed_skills"] = [
-            {
-                "name": entry.name,
-                "path": entry.path,
-                "digest": entry.digest,
-            }
-            for entry in sorted(remaining.values(), key=lambda value: value.name)
+            _serialize_entry(entry)
+            for entry in sorted(normalized.values(), key=lambda value: value.name)
         ]
         data["updated_at"] = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
         _write_manifest(manifest_path(destination), data)
     else:
         manifest_path(destination).unlink(missing_ok=True)
     return actions
+
+
+def uninstall_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Remove only cmize-skills files recorded by a destination manifest."
+    )
+    parser.add_argument(
+        "--target",
+        choices=sorted(TARGET_DESTINATIONS),
+        required=True,
+        help="host whose default personal skills directory should be used",
+    )
+    parser.add_argument(
+        "--destination",
+        type=Path,
+        help="explicit skills directory; overrides the target default",
+    )
+    selection = parser.add_mutually_exclusive_group()
+    selection.add_argument(
+        "--skills",
+        nargs="+",
+        help="managed skill names; comma-separated values are also accepted",
+    )
+    selection.add_argument(
+        "--all",
+        action="store_true",
+        help="remove every skill listed in the manifest",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="show file-level actions without changing files",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="remove manifest-listed files even if a managed skill was edited",
+    )
+    args = parser.parse_args(argv)
+    destination = (
+        args.destination
+        if args.destination is not None
+        else TARGET_DESTINATIONS[args.target]
+    )
+    try:
+        actions = uninstall(
+            destination,
+            args.skills,
+            select_all=args.all,
+            dry_run=args.dry_run,
+            force=args.force,
+        )
+    except (InstallationError, OSError) as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+    for action in actions:
+        print(action)
+    if not actions:
+        print("No managed files selected.")
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:

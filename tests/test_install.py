@@ -140,7 +140,7 @@ class InstallTests(unittest.TestCase):
                 symlink=False,
                 replace=False,
             )
-            self.assertIn("UPDATE replace", actions[0])
+            self.assertTrue(any("UPDATE file" in action for action in actions))
             self.assertTrue(manifest_path(destination).is_file())
 
             actions = uninstall(
@@ -150,7 +150,7 @@ class InstallTests(unittest.TestCase):
                 dry_run=False,
                 force=False,
             )
-            self.assertIn("UNINSTALL remove", actions[0])
+            self.assertIn("UNINSTALL file", actions[0])
             self.assertTrue((destination / "alpha").exists())
             self.assertTrue(manifest_path(destination).is_file())
 
@@ -161,8 +161,9 @@ class InstallTests(unittest.TestCase):
                 dry_run=False,
                 force=False,
             )
-            self.assertIn("UNINSTALL remove", actions[0])
-            self.assertFalse((destination / "alpha").exists())
+            self.assertIn("UNINSTALL file", actions[0])
+            self.assertTrue((destination / "alpha").is_dir())
+            self.assertFalse((destination / "alpha" / "SKILL.md").exists())
             self.assertFalse(manifest_path(destination).exists())
 
     def test_all_flag_installs_every_skill_and_manifest(self) -> None:
@@ -211,9 +212,34 @@ class InstallTests(unittest.TestCase):
                 symlink=False,
                 replace=False,
             )
-            self.assertTrue(any("UPDATE remove" in action for action in actions))
-            self.assertFalse((destination / "beta").exists())
+            self.assertTrue(any("UPDATE file" in action for action in actions))
+            self.assertTrue((destination / "beta").is_dir())
+            self.assertFalse((destination / "beta" / "SKILL.md").exists())
             self.assertNotIn('"name": "beta"', manifest_path(destination).read_text())
+
+    def test_legacy_manifest_uninstall_preserves_skill_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source = make_source(root)
+            destination = root / "destination"
+            plan = build_plan(source, destination, ["alpha"])
+            execute_plan(plan)
+            data = build_manifest(source, destination, "claude", plan, False)
+            data["schema_version"] = 1
+            for entry in data["managed_skills"]:
+                entry.pop("files")
+            _write_manifest(manifest_path(destination), data)
+
+            uninstall(
+                destination,
+                None,
+                select_all=False,
+                dry_run=False,
+                force=False,
+            )
+            self.assertTrue((destination / "alpha").is_dir())
+            self.assertFalse((destination / "alpha" / "SKILL.md").exists())
+            self.assertFalse(manifest_path(destination).exists())
 
     def test_manifest_refuses_modified_skill_without_override(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
@@ -271,6 +297,9 @@ class InstallTests(unittest.TestCase):
                 dry_run=False,
                 force=True,
             )
+            self.assertTrue((destination / "alpha").is_dir())
+            self.assertTrue((destination / "alpha" / "local-edit.md").is_file())
+            self.assertTrue((destination / "alpha" / "another-edit.md").is_file())
             self.assertFalse(manifest_path(destination).exists())
 
     def test_manifest_refuses_removing_a_required_dependency(self) -> None:

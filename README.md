@@ -116,10 +116,10 @@ a skills directory, not the plugin root.
 
 Every successful direct install writes
 `<destination>/.cmize-skills-manifest.json`. The manifest records the bundle
-version, source fingerprint, installation mode, and the exact skill directories
-owned by this installer. It prevents an update or uninstall from touching
-unmanaged skills, removes managed skills that disappear from the source on
-update, and detects local edits before destructive operations.
+version, source fingerprint, installation mode, and the exact files owned by
+this installer. It prevents an update or uninstall from touching unmanaged
+skills, removes managed files that disappear from the source on update, and
+detects local edits before destructive operations.
 
 ```bash
 # Preview and then update the manifest-owned install.
@@ -129,19 +129,25 @@ python3 scripts/install.py --target claude --update
 # If a managed skill was intentionally edited, review it before replacing it.
 python3 scripts/install.py --target claude --update --replace
 
-# Preview and then remove every skill owned by this manifest.
-python3 scripts/install.py --target claude --uninstall --dry-run
-python3 scripts/install.py --target claude --uninstall
+# Preview and then remove every manifest-listed file.
+python3 scripts/uninstall.py --target claude --dry-run
+python3 scripts/uninstall.py --target claude
 
 # Remove only one managed skill; the manifest remains for the others.
-python3 scripts/install.py --target claude --uninstall --skills best-practices
+python3 scripts/uninstall.py --target claude --skills best-practices
 
-# Explicitly remove a managed skill even if it has local edits.
-python3 scripts/install.py --target claude --uninstall --force
+# Remove only manifest-listed files even if a managed skill has local edits.
+python3 scripts/uninstall.py --target claude --force
 ```
 
-Partial uninstall refuses to remove `adversarial-review` while
-`auto-review` remains managed, because that would leave a broken dependency.
+The standalone uninstaller never removes a skill directory. It removes only
+manifest-listed files and symlink pointers, preserves unlisted user files, and
+leaves skill directories in place, even when they become empty. The
+`install.py --uninstall` form remains available as a compatibility alias.
+Without a valid manifest, the uninstaller refuses to guess which files it
+owns.
+Partial uninstall refuses to remove `adversarial-review` while `auto-review`
+remains managed, because that would leave a broken dependency.
 
 The installer refuses to claim an existing unmanaged install unless
 `--replace` is explicitly supplied during a fresh install. For a project-local

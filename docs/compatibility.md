@@ -37,7 +37,7 @@ skills](https://docs.anthropic.com/en/docs/claude-code/skills).
 
 - Candidate bundle: `cmize-skills` `0.1.0`.
 - Source identity: canonical `src/` content fingerprint `404867decdfe3d8305206520560052f91a7f53a7e41a3ab2c40db7e53f9c16fb`; the release commit is recorded by the `v0.1.0` tag after this candidate is committed.
-- Static gates: `python3 scripts/validate.py` passed; `python3 -m unittest discover -s tests -p 'test_*.py'` passed with 17 tests.
+- Static gates: `python3 scripts/validate.py` passed; `python3 -m unittest discover -s tests -p 'test_*.py'` passed with 19 tests.
 - Codex plugin catalog: `CODEX_HOME=/tmp/cmize-codex-market-replay-2/.codex codex plugin marketplace add "$PWD" --json` followed by `CODEX_HOME=/tmp/cmize-codex-market-replay-2/.codex codex plugin add cmize-skills@cmize-skills --json` passed from the repository root; installed version was `0.1.0`.
 - Codex explicit skills: an isolated project `.agents/skills` install explicitly invoked `adversarial-review` and `best-practices`; both reported findings without edits.
 - Codex explicit auto-review: one separate reviewer was launched and returned `insufficient evidence` for the intentionally underspecified smoke plan; no files were edited. Prompts explicitly using other skills did not invoke auto-review.
@@ -62,7 +62,7 @@ python3 scripts/install.py --target cursor --destination /tmp/cmize-skills-clean
 python3 scripts/install.py --target cursor --destination /tmp/cmize-skills-clean-cursor
 ```
 
-Results: validator passed; 17 unit tests passed; all three direct dry-run/copy pairs passed. The isolated Codex home used below was preconfigured for the test account outside this repository; no credentials are stored here.
+Results: validator passed; 19 unit tests passed; all three direct dry-run/copy pairs passed. The isolated Codex home used below was preconfigured for the test account outside this repository; no credentials are stored here.
 
 ### Direct-install manifest lifecycle replay
 
@@ -71,13 +71,14 @@ python3 scripts/install.py --target claude --destination /tmp/cmize-skills-manif
 python3 scripts/install.py --target claude --destination /tmp/cmize-skills-manifest-replay --all
 python3 scripts/install.py --target claude --destination /tmp/cmize-skills-manifest-replay --update --dry-run
 python3 scripts/install.py --target claude --destination /tmp/cmize-skills-manifest-replay --update
-python3 scripts/install.py --target claude --destination /tmp/cmize-skills-manifest-replay --uninstall --dry-run
-python3 scripts/install.py --target claude --destination /tmp/cmize-skills-manifest-replay --uninstall
+python3 scripts/uninstall.py --target claude --destination /tmp/cmize-skills-manifest-replay --dry-run
+python3 scripts/uninstall.py --target claude --destination /tmp/cmize-skills-manifest-replay
 ```
 
-Result: all six commands passed; the install wrote
-`.cmize-skills-manifest.json`, update replaced only manifest-owned skills, and
-uninstall removed those skills and the manifest.
+Result: all six commands passed; the install wrote a per-file
+`.cmize-skills-manifest.json`, update replaced only manifest-owned files, and
+the standalone uninstaller removed those files and the manifest while
+preserving every skill directory.
 
 ```bash
 python3 scripts/install.py --target codex --destination /tmp/cmize-codex-project/.agents/skills
@@ -272,8 +273,9 @@ Evidence record:
 The repository validator and installer unit tests are host-independent. They
 prove package shape, link integrity, refusal to overwrite by default,
 selected-skill behavior, dry-run behavior, replacement, symlink handling,
-manifest creation, update, local-edit detection, and authoritative
-uninstall. They do not prove that a host discovers or invokes a copied skill.
+manifest creation, update, local-edit detection, file-level uninstall, and
+preservation of skill directories and unlisted files. They do not prove that a
+host discovers or invokes a copied skill.
 
 The clean-install gate must record:
 

@@ -7,7 +7,9 @@ All notable changes to the `cmize-skills` bundle are recorded here. The bundle u
 ### Added
 
 - Manifest-backed direct installs with safe updates, partial or full
-  uninstalls, local-edit detection, and explicit override flags.
+  uninstalls, local-edit detection, and explicit override flags. Added a
+  standalone manifest-only uninstaller that preserves skill directories and
+  unlisted user files.
 - Cross-host installation guidance that avoids duplicate Cursor discovery.
 
 ## [0.1.0] - 2026-08-10
