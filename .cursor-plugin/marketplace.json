@@ -1,0 +1,11 @@
+{
+  "name": "agent-files",
+  "owner": { "name": "Christopher Mize" },
+  "plugins": [
+    {
+      "name": "agent-files",
+      "source": ".",
+      "description": "Canonical AGENTS.md, selected Agent Skills, and colocated evals."
+    }
+  ]
+}

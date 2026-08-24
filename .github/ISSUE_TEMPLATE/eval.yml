@@ -1,0 +1,53 @@
+name: Eval candidate
+description: Propose a new eval from a failure or gap. Sanitize before submitting to this public repo.
+title: "eval: "
+labels: ["eval-candidate"]
+body:
+  - type: textarea
+    id: repro
+    attributes:
+      label: Repro
+      description: What you asked the agent to do.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual
+    validations:
+      required: true
+  - type: dropdown
+    id: artifact
+    attributes:
+      label: Artifact path
+      options:
+        - agents
+        - skills/best-practices
+        - skills/auto-review
+        - skills/adversarial-review
+        - skills/improve-against-evals
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - low
+        - medium
+        - high
+    validations:
+      required: true
+  - type: checkboxes
+    id: public
+    attributes:
+      label: Public
+      options:
+        - label: This issue is sanitized and may be public.
+          required: true

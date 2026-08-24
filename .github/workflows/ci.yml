@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Sync
+        run: uv sync --dev
+      - name: Ruff
+        run: uv run ruff check .
+      - name: basedpyright
+        run: uv run basedpyright
+      - name: mdformat
+        run: |
+          git ls-files '*.md' \
+            | grep -v '/evals/files/' \
+            | grep -v '/reviews/' \
+            | xargs -r uv run mdformat --check
+      - name: Pytest
+        run: uv run pytest
+      - name: Replay redacted fake trace
+        run: uv run pytest tests/test_replay.py -q

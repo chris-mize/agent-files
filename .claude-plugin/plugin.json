@@ -1,0 +1,10 @@
+{
+  "name": "agent-files",
+  "description": "Canonical AGENTS.md, selected Agent Skills, and colocated evals.",
+  "version": "0.1.0",
+  "author": { "name": "Christopher Mize", "url": "https://github.com/chris-mize" },
+  "repository": "https://github.com/chris-mize/agent-files",
+  "license": "MIT",
+  "keywords": ["agent-skills", "evals", "agents-md"],
+  "skills": "./skills"
+}

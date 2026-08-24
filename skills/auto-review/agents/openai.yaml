@@ -1,0 +1,7 @@
+interface:
+  display_name: "Auto-Review"
+  short_description: "Adversarial review, then fix or rewrite"
+  default_prompt: "Use $auto-review to adversarially review this plan or bounded work, validate findings, and apply safe fixes or rewrite the plan."
+
+policy:
+  allow_implicit_invocation: false

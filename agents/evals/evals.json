@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "skill_name": "agents",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Write a file named .agent-files-canary containing exactly canary plus a newline.",
+      "expected_output": ".agent-files-canary exists with contents canary\\n",
+      "files": ["agents/evals/files/tiny-repo"],
+      "expectations": [".agent-files-canary exists"],
+      "graders": [
+        {
+          "type": "file_content",
+          "path": ".agent-files-canary",
+          "equals": "canary\n"
+        }
+      ],
+      "crowded": false,
+      "source": {
+        "state": "frozen",
+        "prompt_hash": "sha256:canary",
+        "approved_by": "chris-mize"
+      }
+    },
+    {
+      "id": 2,
+      "prompt": "Create hello.txt containing exactly: ok",
+      "expected_output": "hello.txt exists with contents ok and pytest passes",
+      "files": ["agents/evals/files/tiny-repo"],
+      "expectations": ["hello.txt contains exactly ok", "pytest in the fixture exits 0"],
+      "graders": [
+        {"type": "file_content", "path": "hello.txt", "equals": "ok\n"},
+        {"type": "test_cmd", "cmd": ["pytest", "-q"], "cwd": "."}
+      ],
+      "crowded": false,
+      "source": {
+        "state": "frozen",
+        "prompt_hash": "sha256:hello",
+        "approved_by": "chris-mize"
+      }
+    },
+    {
+      "id": 3,
+      "prompt": "Buddy already decided the CLI is named widget and prints hi. As we discussed, write SPEC.md in the workspace. Do not rely on this issue thread remaining available. The spec must stand alone: Goal, File tree, Commands, Defaults, Tests, Definition of done.",
+      "expected_output": "SPEC.md is a standalone implementation spec for widget printing hi",
+      "files": ["agents/evals/files/standalone-spec"],
+      "expectations": [
+        "SPEC.md has required headings",
+        "SPEC.md mentions widget and hi",
+        "SPEC.md has no chat residue"
+      ],
+      "graders": [
+        {"type": "file_content", "path": "SPEC.md"},
+        {
+          "type": "grep_headings",
+          "path": "SPEC.md",
+          "headings": ["Goal", "File tree", "Commands", "Defaults", "Tests", "Definition of done"]
+        },
+        {
+          "type": "grep_absent",
+          "path": "SPEC.md",
+          "needles": [
+            "as we discussed",
+            "in the conversation",
+            "as mentioned earlier",
+            "see the chat",
+            "from our thread",
+            "as I told you",
+            "you said earlier"
+          ],
+          "ignore_case": true
+        },
+        {"type": "grep_present", "path": "SPEC.md", "needles": ["widget", "hi"]}
+      ],
+      "crowded": true,
+      "source": {
+        "state": "frozen",
+        "issue": null,
+        "prompt_hash": "sha256:standalone-spec",
+        "approved_by": "chris-mize"
+      }
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+schema_version = 1
+default_adapter = "cursor"
+models = ["composer-2.5-fast"]
+timeout_seconds = 300
+max_runs_per_invocation = 20
+max_runs_per_day = 50
+min_repeats_for_smoke = 3
+min_repeats_for_keep = 5
+improve_max_iterations = 3
+cache_dir = "~/.cache/agent-files"
+env_allowlist = ["PATH", "HOME", "USER", "LANG", "TERM", "CURSOR_API_KEY"]
+
+[graders]
+always_on_size_ratchet = true
+
+[review]
+required_for_freeze = true
+required_for_keep = true
+required_for_prune_approve = true

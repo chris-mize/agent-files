@@ -1,0 +1,3 @@
+{"type":"system","subtype":"init","model":"fake"}
+{"type":"tool_call","subtype":"completed","tool_call":{"editToolCall":{"args":{"path":"hello.txt"}}}}
+{"type":"result","result":"ok"}
