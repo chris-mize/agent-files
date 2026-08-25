@@ -6,8 +6,13 @@
       "id": 1,
       "prompt": "Write a file named .agent-files-canary containing exactly canary plus a newline.",
       "expected_output": ".agent-files-canary exists with contents canary\\n",
-      "files": ["agents/evals/files/tiny-repo"],
-      "expectations": [".agent-files-canary exists"],
+      "files": [
+        "agents/evals/files/tiny-repo"
+      ],
+      "expectations": [
+        ".agent-files-canary exists"
+      ],
+      "assertions": [],
       "graders": [
         {
           "type": "file_content",
@@ -18,43 +23,81 @@
       "crowded": false,
       "source": {
         "state": "frozen",
+        "issue": null,
         "prompt_hash": "sha256:canary",
-        "approved_by": "chris-mize"
+        "prompt_file": null,
+        "approved_by": "chris-mize",
+        "review_path": null,
+        "known_gap": false
       }
     },
     {
       "id": 2,
       "prompt": "Create hello.txt containing exactly: ok",
       "expected_output": "hello.txt exists with contents ok and pytest passes",
-      "files": ["agents/evals/files/tiny-repo"],
-      "expectations": ["hello.txt contains exactly ok", "pytest in the fixture exits 0"],
+      "files": [
+        "agents/evals/files/tiny-repo"
+      ],
+      "expectations": [
+        "hello.txt contains exactly ok",
+        "pytest in the fixture exits 0"
+      ],
+      "assertions": [],
       "graders": [
-        {"type": "file_content", "path": "hello.txt", "equals": "ok\n"},
-        {"type": "test_cmd", "cmd": ["pytest", "-q"], "cwd": "."}
+        {
+          "type": "file_content",
+          "path": "hello.txt",
+          "equals": "ok\n"
+        },
+        {
+          "type": "test_cmd",
+          "cmd": [
+            "pytest",
+            "-q"
+          ],
+          "cwd": "."
+        }
       ],
       "crowded": false,
       "source": {
         "state": "frozen",
+        "issue": null,
         "prompt_hash": "sha256:hello",
-        "approved_by": "chris-mize"
+        "prompt_file": null,
+        "approved_by": "chris-mize",
+        "review_path": null,
+        "known_gap": false
       }
     },
     {
       "id": 3,
       "prompt": "Buddy already decided the CLI is named widget and prints hi. As we discussed, write SPEC.md in the workspace. Do not rely on this issue thread remaining available. The spec must stand alone: Goal, File tree, Commands, Defaults, Tests, Definition of done.",
       "expected_output": "SPEC.md is a standalone implementation spec for widget printing hi",
-      "files": ["agents/evals/files/standalone-spec"],
+      "files": [
+        "agents/evals/files/standalone-spec"
+      ],
       "expectations": [
         "SPEC.md has required headings",
         "SPEC.md mentions widget and hi",
         "SPEC.md has no chat residue"
       ],
+      "assertions": [],
       "graders": [
-        {"type": "file_content", "path": "SPEC.md"},
+        {
+          "type": "file_content",
+          "path": "SPEC.md"
+        },
         {
           "type": "grep_headings",
           "path": "SPEC.md",
-          "headings": ["Goal", "File tree", "Commands", "Defaults", "Tests", "Definition of done"]
+          "headings": [
+            "Goal",
+            "File tree",
+            "Commands",
+            "Defaults",
+            "Tests",
+            "Definition of done"
+          ]
         },
         {
           "type": "grep_absent",
@@ -70,14 +113,24 @@
           ],
           "ignore_case": true
         },
-        {"type": "grep_present", "path": "SPEC.md", "needles": ["widget", "hi"]}
+        {
+          "type": "grep_present",
+          "path": "SPEC.md",
+          "needles": [
+            "widget",
+            "hi"
+          ]
+        }
       ],
       "crowded": true,
       "source": {
         "state": "frozen",
-        "issue": null,
-        "prompt_hash": "sha256:standalone-spec",
-        "approved_by": "chris-mize"
+        "issue": "https://github.com/chris-mize/agent-files/issues/1",
+        "prompt_hash": "sha256:b88bf53b7b0341dfeb465ff2823a802a27f5a132aacaa845c8cb9539f64ffd5e",
+        "prompt_file": "evals/candidates/b88bf53b7b0341dfeb465ff2823a802a27f5a132aacaa845c8cb9539f64ffd5e.txt",
+        "approved_by": "chris-mize",
+        "review_path": "reviews/freeze-agents-3.json",
+        "known_gap": false
       }
     }
   ]

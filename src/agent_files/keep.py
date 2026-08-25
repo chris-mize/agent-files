@@ -60,9 +60,16 @@ def decide_keep(
     leak_passed: bool,
     review_ok: bool,
     skill_read_ok: bool,
+    description_ok: bool = True,
+    known_gap_ids: set[int] | None = None,
 ) -> KeepDecision:
+    skip = known_gap_ids or set()
+    parent = without_known_gaps(parent, skip)
+    child = without_known_gaps(child, skip)
     if not allow_cross_version and not same_comparison_key(parent, child):
         return KeepDecision(False, "comparison_key mismatch")
+    if not description_ok:
+        return KeepDecision(False, "description when-to-use")
     eval_ids = sorted({r.eval_id for r in parent + child if r.status != "skipped"})
     for eid in eval_ids:
         ck, cn = k_of_n(child, eid)
@@ -85,3 +92,29 @@ def decide_keep(
     if not review_ok:
         return KeepDecision(False, "review not ready")
     return KeepDecision(True, "keep")
+
+
+def description_holds_when_to_use(markdown: str) -> bool:
+    """YAML description carries when-to-use; body must not start with 'Use when'."""
+    if not markdown.startswith("---"):
+        return False
+    rest = markdown[3:]
+    end = rest.find(
+        chr(10) + "---"
+    )
+    if end < 0:
+        return False
+    front = rest[:end]
+    body = rest[end + 4 :].lstrip()
+    description = ""
+    for line in front.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("description:"):
+            description = stripped.split(":", 1)[1].strip().strip('"').strip("'")
+    if body.lower().startswith("use when"):
+        return False
+    lowered = description.lower()
+    return bool(description) and ("when" in lowered or "use" in lowered)
+
+def without_known_gaps(results: list[RunResult], known_gap_ids: set[int]) -> list[RunResult]:
+    return [r for r in results if r.eval_id not in known_gap_ids]

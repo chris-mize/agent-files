@@ -68,6 +68,15 @@ def baseline_bytes(provenance: dict, artifact: str) -> int | None:
     return None
 
 
+def resolve_prompt(item: EvalItem, repo: Path) -> str:
+    rel = item.source.prompt_file
+    if rel:
+        path = repo / rel
+        if path.is_file():
+            return path.read_text(encoding="utf-8")
+    return item.prompt
+
+
 def hash_path(path: Path) -> str:
     if path.is_file():
         return sha256_file(path)
@@ -149,7 +158,7 @@ def execute(
             for repeat_index in range(repeats):
                 spec = RunSpec(
                     eval_id=item.id,
-                    prompt=item.prompt,
+                    prompt=resolve_prompt(item, root),
                     adapter=adapter_name,
                     model=model,
                     timeout_seconds=cfg.timeout_seconds,

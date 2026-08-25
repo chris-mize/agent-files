@@ -10,6 +10,7 @@ from agent_files.github import OWNER_LOGIN, user_login
 from agent_files.ledger import ledger_path, read_ledger
 from agent_files.models.evalfile import EvalState, load_evals_file, write_evals_file
 from agent_files.repo import find_repo_root
+from agent_files.review import require_review
 
 
 class PruneError(RuntimeError):
@@ -45,6 +46,8 @@ def approve(artifact: str, eval_id: int, repo: Path | None = None, login_fn=user
     if login != OWNER_LOGIN:
         raise PermissionError(f"{login} is not {OWNER_LOGIN}")
     root = repo or find_repo_root()
+    cfg = load_config(root)
+    require_review(root, "prune", artifact, eval_id, cfg)
     data = load_evals_file(evals_path(root, artifact))
     item = data.get(eval_id)
     if item.source.known_gap:

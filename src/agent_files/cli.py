@@ -15,7 +15,7 @@ from agent_files.prune import approve as prune_approve
 from agent_files.prune import propose as prune_propose
 from agent_files.repo import find_repo_root
 from agent_files.report import report as render_report
-from agent_files.review import review_gate
+from agent_files.review import ReviewRequiredError, review_gate
 from agent_files.upstream import diff_upstream
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
@@ -53,8 +53,15 @@ def run(
 
 
 @app.command()
-def report(json_out: bool = typer.Option(False, "--json")) -> None:
-    typer.echo(render_report(as_json=json_out), nl=False)
+def report(
+    json_out: bool = typer.Option(False, "--json"),
+    keep_parent: str | None = typer.Option(None, "--keep-parent"),
+    keep_child: str | None = typer.Option(None, "--keep-child"),
+) -> None:
+    typer.echo(
+        render_report(as_json=json_out, keep_parent=keep_parent, keep_child=keep_child),
+        nl=False,
+    )
 
 
 @app.command()
@@ -84,7 +91,7 @@ def prune(
             typer.echo("approved")
         else:
             raise typer.BadParameter("pass --propose or --approve")
-    except PruneError as exc:
+    except (PruneError, ReviewRequiredError, PermissionError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(1) from exc
 
@@ -94,8 +101,9 @@ def review(
     gate: str = typer.Option(..., "--gate"),
     artifact: str = typer.Option(..., "--artifact"),
     eval_id: int | None = typer.Option(None, "--eval"),
+    adapter: str | None = typer.Option(None, "--adapter"),
 ) -> None:
-    path = review_gate(gate, artifact, eval_id)
+    path = review_gate(gate, artifact, eval_id, adapter=adapter)
     typer.echo(str(path))
 
 

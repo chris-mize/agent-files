@@ -19,6 +19,8 @@ prompt = Path(os.environ["AGENT_FILES_PROMPT_FILE"]).read_text()
 sleep = float(os.environ.get("AGENT_FILES_FAKE_SLEEP", "0"))
 if sleep:
     time.sleep(sleep)
+if "verdict" in prompt.lower() or "auto-review" in prompt.lower():
+    print('{"verdict": "ready", "findings": []}')
 if ".agent-files-canary" in prompt or "canary" in prompt.lower():
     (ws / ".agent-files-canary").write_text("canary\n", encoding="utf-8")
 if "hello.txt" in prompt:

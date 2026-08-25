@@ -447,3 +447,135 @@ def test_isolation_only_win_reverts() -> None:
     )
     assert decision.keep is False
     assert decision.isolation_only is True
+
+
+
+def test_description_holds_when_to_use() -> None:
+    from agent_files.keep import description_holds_when_to_use
+
+    ok = """---
+name: demo
+description: Use when tuning AGENTS.md wording against frozen evals.
+---
+
+# Body
+
+Read the density note first.
+"""
+    bad = """---
+name: demo
+description: Use when tuning AGENTS.md wording against frozen evals.
+---
+
+Use when the user says hello.
+"""
+    assert description_holds_when_to_use(ok) is True
+    assert description_holds_when_to_use(bad) is False
+
+
+def test_freeze_requires_review(tmp_path: Path) -> None:
+    from agent_files.config import AppConfig
+    from agent_files.review import ReviewRequiredError, require_review
+
+    cfg = AppConfig(models=["m"], cache_dir=str(tmp_path / "c"))
+    with pytest.raises(ReviewRequiredError):
+        require_review(tmp_path, "freeze", "agents", 3, cfg)
+    review = tmp_path / "reviews" / "freeze-agents-3.json"
+    review.parent.mkdir(parents=True)
+    review.write_text(
+        '{"verdict":"ready","findings":[],"gate":"freeze","artifact":"agents","eval_id":3}\n'
+    )
+    assert require_review(tmp_path, "freeze", "agents", 3, cfg) == review
+
+
+def test_report_keep_compare_refuses_key_mismatch(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from agent_files import report as report_mod
+    from agent_files.config import AppConfig
+    from agent_files.ledger import LedgerEntry
+
+    parent = [
+        LedgerEntry(
+            run_id="p",
+            comparison_key="ck-a",
+            variant_key="parent",
+            cost_state="subscription_quota",
+            started_at="2026-01-01T00:00:00+00:00",
+            eval_id=3,
+            model="m",
+            passed=True,
+        )
+        for _ in range(5)
+    ]
+    child = [
+        LedgerEntry(
+            run_id="c",
+            comparison_key="ck-b",
+            variant_key="child",
+            cost_state="subscription_quota",
+            started_at="2026-01-01T00:00:00+00:00",
+            eval_id=3,
+            model="m",
+            passed=True,
+        )
+        for _ in range(5)
+    ]
+    monkeypatch.setattr(report_mod, "find_repo_root", lambda: tmp_path)
+    cfg = AppConfig(models=["m"], cache_dir=str(tmp_path / "c"), min_repeats_for_keep=5)
+    monkeypatch.setattr(report_mod, "load_config", lambda _r: cfg)
+    monkeypatch.setattr(report_mod, "ledger_path", lambda _c: tmp_path / "ledger.jsonl")
+    monkeypatch.setattr(report_mod, "read_ledger", lambda *_a, **_k: parent + child)
+    text = report_mod.report(keep_parent="parent", keep_child="child")
+    assert "comparison_key mismatch" in text
+
+
+def test_review_plugin_includes_auto_and_adversarial(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    for name in ("auto-review", "adversarial-review", "best-practices"):
+        skill = repo / "skills" / name
+        skill.mkdir(parents=True)
+        (skill / "SKILL.md").write_text(f"# {name}\n")
+    dest = tmp_path / "plugin"
+    ids = assemble_plugin(repo, artifact="review", dest=dest, crowded=False)
+    assert "auto-review" in ids
+    assert "adversarial-review" in ids
+    assert "best-practices" not in ids
+
+
+def test_promote_eval3_only_when_unbound(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    evals = repo / "agents" / "evals"
+    evals.mkdir(parents=True)
+    write_evals_file(
+        evals / "evals.json",
+        EvalsFile(
+            schema_version=1,
+            skill_name="agents",
+            evals=[
+                EvalItem(
+                    id=3,
+                    prompt="spec",
+                    graders=[GraderSpec(type="file_content")],
+                    source=_source(state=EvalState.APPROVED, issue=None),
+                )
+            ],
+        ),
+    )
+    first = promote(
+        "https://example.invalid/issue/1",
+        "agents",
+        approve=False,
+        repo=repo,
+        login_fn=lambda: OWNER_LOGIN,
+        view_fn=lambda _url: {"body": "repro", "url": "https://example.invalid/issue/1"},
+    )
+    assert first.id == 3
+    assert first.source.issue == "https://example.invalid/issue/1"
+    second = promote(
+        "https://example.invalid/issue/2",
+        "agents",
+        approve=False,
+        repo=repo,
+        login_fn=lambda: OWNER_LOGIN,
+        view_fn=lambda _url: {"body": "other", "url": "https://example.invalid/issue/2"},
+    )
+    assert second.id != 3

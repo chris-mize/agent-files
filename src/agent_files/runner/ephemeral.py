@@ -94,6 +94,12 @@ def assemble_plugin(
         '{"name":"agent-files-eval","version":"0.0.0","description":"eval plugin","skills":"./skills"}\n',
         encoding="utf-8",
     )
+    if artifact == "review":
+        for name in ("auto-review", "adversarial-review"):
+            src = (repo / "skills" / name)
+            if src.is_dir():
+                copy_fixture(src, skills_dest / name)
+        return crowded_skill_ids(skills_dest, exclude=None)
     exclude: str | None = None
     if artifact.startswith("skills/"):
         exclude = artifact.split("/", 1)[1]

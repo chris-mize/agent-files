@@ -8,6 +8,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from agent_files.config import load_config
 from agent_files.execute import evals_path
 from agent_files.models.evalfile import (
     EvalItem,
@@ -17,6 +18,7 @@ from agent_files.models.evalfile import (
     load_evals_file,
     write_evals_file,
 )
+from agent_files.review import require_review
 
 OWNER_LOGIN = "chris-mize"
 OWNER_LOGIN = OWNER_LOGIN
@@ -48,6 +50,16 @@ def issue_view(url: str) -> dict[str, Any]:
 
 def create_issue(title: str, body: str) -> str:
     return run_gh(["issue", "create", "--title", title, "--body", body]).strip()
+
+
+
+def sync_issue_labels(issue_url: str, state: EvalState) -> None:
+    label = "eval-candidate" if state == EvalState.CANDIDATE else "eval-approved"
+    try:
+        run_gh(["label", "create", label, "--force"])
+        run_gh(["issue", "edit", issue_url, "--add-label", label])
+    except GhError:
+        pass
 
 
 def promote(
@@ -82,6 +94,38 @@ def promote(
             raise PermissionError(f"{login} is not {OWNER_LOGIN}")
         state = EvalState.APPROVED
         approved_by = login
+    issue_ref = str(issue.get("url") or issue_url)
+    existing: EvalItem | None = None
+    if data is not None:
+        for eval_item in data.evals:
+            if eval_item.source.issue == issue_ref:
+                existing = eval_item
+                break
+        if existing is None and artifact in {"agents", "agents/AGENTS.md"}:
+            try:
+                bound = data.get(3)
+            except KeyError:
+                bound = None
+            if bound is not None and bound.source.issue is None:
+                existing = bound
+    if existing is not None:
+        if data is None:
+            raise RuntimeError("existing eval requires a loaded evals file")
+        existing.source.issue = issue_ref
+        existing.source.prompt_hash = prompt_hash
+        existing.source.prompt_file = str(prompt_file.relative_to(repo))
+        if approve:
+            existing.source.approved_by = approved_by
+            if existing.source.state == EvalState.CANDIDATE:
+                existing.source.state = EvalState.APPROVED
+            elif existing.graders:
+                cfg = load_config(repo)
+                review_path = require_review(repo, "freeze", artifact, existing.id, cfg)
+                existing.source.review_path = str(review_path.relative_to(repo))
+                existing.source.state = EvalState.FROZEN
+        write_evals_file(path, data)
+        sync_issue_labels(issue_ref, existing.source.state)
+        return existing
     item = EvalItem(
         id=next_id,
         prompt="" if state == EvalState.CANDIDATE else prompt,
@@ -101,4 +145,5 @@ def promote(
     else:
         data.evals.append(item)
     write_evals_file(path, data)
+    sync_issue_labels(issue_ref, item.source.state)
     return item
