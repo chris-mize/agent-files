@@ -16,7 +16,6 @@ from agent_files.prune import propose as prune_propose
 from agent_files.repo import find_repo_root
 from agent_files.report import report as render_report
 from agent_files.review import ReviewRequiredError, review_gate
-from agent_files.upstream import diff_upstream
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 
@@ -119,13 +118,3 @@ def install_cmd(
     for line in install_artifacts(dry_run=dry_run, uninstall=uninstall):
         typer.echo(line)
 
-
-@app.command("diff-upstream")
-def diff_upstream_cmd() -> None:
-    lines = diff_upstream()
-    if not lines:
-        typer.echo("in sync")
-        return
-    for line in lines:
-        typer.echo(line)
-    raise typer.Exit(1)
