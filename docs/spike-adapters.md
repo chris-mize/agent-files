@@ -6,11 +6,11 @@ Measured on this machine. Adapter argv and install destinations must follow this
 
 | name | path | notes |
 |---|---|---|
-| cursor-agent | `/Users/cmize/.local/bin/cursor-agent` | version `2026.08.11-e8db854` (`cursor-agent --version` → `2026.08.11-e8db854`) |
-| codex | `/opt/homebrew/bin/codex` | version `0.147.0` |
+| cursor-agent | on `PATH` (`~/.local/bin`) | version `2026.08.11-e8db854` (`cursor-agent --version` → `2026.08.11-e8db854`) |
+| codex | on `PATH` (Homebrew) | version `0.147.0` |
 | claude | **not on PATH** | Claude adapter **skip**; never fake scores |
-| uv | `/Users/cmize/.local/bin/uv` | installed during spike (`0.12.5`) |
-| gh | `/opt/homebrew/bin/gh` | logged in as `chris-mize` |
+| uv | on `PATH` (`~/.local/bin`) | installed during spike (`0.12.5`) |
+| gh | on `PATH` (Homebrew) | logged in as `chris-mize` |
 
 ## Cursor argv (confirmed)
 
@@ -81,48 +81,39 @@ Full ids observed (non-exhaustive of the printed list): `auto`, `composer-2.5`, 
 
 `agent-files.toml` `models` is filled with `composer-2.5-fast` only so `run` is cost-bounded. Expand locally if needed.
 
-## Skill discovery (live paths)
+## Where each host reads the always-on instructions
 
-| path | status |
+| host | reads |
 |---|---|
-| `~/.cursor/skills` | **empty** (valid user install target) |
-| `~/.cursor/skills-cursor` | **populated** (Cursor product skills: babysit, canvas, create-skill, …) |
-| `~/.cursor/plugins/cache/cmize-skills` | **populated** (live plugin skills including best-practices, auto-review) |
-| `~/.codex/skills` | **populated** |
-| `~/.agents/skills` | **empty** |
+| Codex CLI and app | `~/.codex/AGENTS.md` |
+| Cursor | `~/AGENTS.md`, as an ancestor of any workspace under the home directory (observed on both laptops) |
+| Claude Code, including the Claude desktop Code tab | `~/.claude/CLAUDE.md`, plus every `AGENTS.md` in the working directory's ancestors when the project has no `CLAUDE.md` ([memory docs](https://code.claude.com/docs/en/memory)) |
 
-Do **not** assume `~/.agents/skills` is where hosts load skills.
+`~/AGENTS.md` is a real file. The other two are symlinks to it, so Claude Code sees one file and does not load the same content twice. Claude desktop **Cowork** sessions skip a symlinked `~/.claude/CLAUDE.md`; Cowork is not a target.
 
-## AGENTS.md realpath (install refuse)
+## Where each host reads user skills
 
-All three resolve to a **foreign git** tree (`Projects/dev-tools`):
+| host | reads |
+|---|---|
+| Codex | `~/.agents/skills` ([skills docs](https://developers.openai.com/codex/skills)); same-named skills in two locations both appear |
+| Cursor | `~/.agents/skills`, `~/.cursor/skills`, `~/.claude/skills`, `~/.codex/skills` |
+| Claude Code | `~/.claude/skills` |
 
-- `realpath ~/.codex/AGENTS.md` → `/Users/cmize/projects/dev-tools/dotfiles/agents/AGENTS.md`
-- `realpath ~/.claude/CLAUDE.md` → same
-- `realpath ~/AGENTS.md` → same
-
-Install **must refuse** writes through these paths (origin is not `chris-mize/agent-files`). Cursor has no safe global AGENTS.md; document a User Rules paste.
+Skills install to `~/.agents/skills` (Codex and Cursor) and, when `~/.claude` exists, `~/.claude/skills` (Claude Code). Nothing installs to `~/.cursor/skills` or `~/.codex/skills`, and copies a previous install left there are removed. Project-scoped skills live in their project's `.agents/skills` and are not installed from here.
 
 ## Machine-readable destinations
 
 ```toml
-[destinations]
-cursor_skills = "~/.cursor/skills"
-codex_skills = "~/.codex/skills"
+[skills]
+destinations = ["~/.agents/skills", "~/.claude/skills"]
+create = ["~/.agents/skills"]
 
-[refuse_agents_md]
-home = "~/AGENTS.md"
-codex = "~/.codex/AGENTS.md"
-claude = "~/.claude/CLAUDE.md"
+[instructions]
+file = "~/AGENTS.md"
+links = ["~/.codex/AGENTS.md", "~/.claude/CLAUDE.md"]
 ```
 
-Refuse AGENTS.md destinations (do not write; they resolve into `dev-tools`):
-
-- `~/AGENTS.md`
-- `~/.codex/AGENTS.md`
-- `~/.claude/CLAUDE.md`
-
-Cursor User Rules: paste `agents/AGENTS.md` manually. There is no global AGENTS.md that is not a foreign-git symlink.
+Install copies `agents/AGENTS.md` to `file`, points each link at it, and copies every `skills/<name>` into each skill destination. A destination whose parent directory is missing (the tool is not installed on this machine) is skipped unless it is listed in `create`. A symlink is replaced, never written through. A real instruction file is moved to `<name>.agent-files-backup`; a skill folder that differs from the repo and was not installed by a previous run is moved under `~/.agent-files-backups/`, outside every skill directory. `--uninstall` restores what was there before the first install.
 
 ## Env allowlist
 
