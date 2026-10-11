@@ -3,9 +3,9 @@
     {
       "path": "agents/AGENTS.md",
       "source_path": "/Users/cmize/Projects/dev-tools/dotfiles/agents/AGENTS.md",
-      "sha256": "a5366c26490a1c2fd55ee586e885a1d98a3ebdf7f75ea5536f16788366028d70",
-      "imported_at": "2026-08-24T19:06:33.168434+00:00",
-      "always_on_baseline_bytes": 7203
+      "sha256": "fdd4f46110975d753f19f04842bdb39c0220d0e0b7b96a0eeb0002607d307f50",
+      "imported_at": "2026-10-11T18:05:22.615646+00:00",
+      "always_on_baseline_bytes": 8292
     },
     {
       "path": "skills/best-practices",
