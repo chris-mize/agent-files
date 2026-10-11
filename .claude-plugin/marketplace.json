@@ -5,14 +5,14 @@
     "url": "https://github.com/chris-mize"
   },
   "metadata": {
-    "description": "Portable Agent Skills for review, research, and quality workflows.",
+    "description": "Portable Agent Skills for review, research, quality, and macOS editor recovery workflows.",
     "version": "1.0.0"
   },
   "plugins": [
     {
       "name": "cmize-skills",
       "source": "./src",
-      "description": "Portable adversarial review, actor-critic quality, auto-review, deep research, and best-practices workflows.",
+      "description": "Portable review, research, quality, orchestration, and macOS editor recovery workflows.",
       "version": "1.0.0",
       "author": {
         "name": "Christopher Mize"

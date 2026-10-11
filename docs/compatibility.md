@@ -36,6 +36,8 @@ skills](https://docs.anthropic.com/en/docs/claude-code/skills).
 ## Release-candidate identity and command ledger
 
 - Release bundle: `cmize-skills` `1.0.0`, published as tag `v1.0.0`.
+- Unreleased addition: `reset-cursor-vscode-macos` passed static validation and the 27-test unit suite at the current source identity. A prior candidate passed a Claude-target direct-install dry run and read-only Cursor and Codex discovery/reference smoke tests; the archive/recovery-policy revision has not repeated those host replays. Claude runtime behavior remains untested. Reset, restore, and uninstall guidance is limited to interactive standalone Claude Code CLI, and the user performs target changes manually. Cursor and Codex use is audit-only.
+- Unreleased source identity: canonical `src/` fingerprint `bb3e905474f14a026df04b2a32e50d20a7a2f9794251ff6d5dbd1269fecf4fea` (excluding generated Python bytecode). The reset-skill host replays below used prior fingerprint `ba92e3ffed9c05cf93c0d20bb47be7e5d51493d7197a93f40621abc86ea0bda3`.
 - Source identity: canonical `src/` content fingerprint `5303672d1d1ab2a57eab8adf05923ea807c066b147b69cef6415d82b803453c9` (excluding generated Python bytecode); the `v1.0.0` release tag binds this source identity.
 - Static gates: `python3 scripts/validate.py` passed; `python3 -m unittest discover -s tests -p 'test_*.py'` passed with 27 tests; actor-critic capability and evaluation harness self-tests passed.
 - Historical Codex plugin catalog replay: `CODEX_HOME=/tmp/cmize-codex-market-replay-2/.codex codex plugin marketplace add "$PWD" --json` followed by `CODEX_HOME=/tmp/cmize-codex-market-replay-2/.codex codex plugin add cmize-skills@cmize-skills --json` passed from the repository root; that replay installed version `0.1.0`.
@@ -86,7 +88,7 @@ preserving every skill directory.
 python3 scripts/install.py --target codex --destination /tmp/cmize-codex-project/.agents/skills
 ```
 
-Result: the canonical five-skill tree was copied into the Codex project discovery directory used by the explicit skill smoke test.
+Result: the then-current five-skill `v1.0.0` tree was copied into the Codex project discovery directory used by the explicit skill smoke test.
 
 ```bash
 CODEX_HOME=/tmp/cmize-codex-market-replay-2/.codex \
@@ -169,6 +171,27 @@ cursor agent --print --output-format text --mode ask --trust \
 
 Result: 3 probes ran, 2 completed and 1 failed; official access was blocked, so no research workers launched and status `blocked — capability gap`.
 
+### Unreleased reset-skill replay
+
+```bash
+python3 scripts/validate.py
+python3 -m unittest discover -s tests -p 'test_*.py'
+python3 scripts/install.py --target claude \
+  --destination /tmp/cmize-reset-skill-dry-run \
+  --skills reset-cursor-vscode-macos --dry-run
+python3 scripts/install.py --target codex \
+  --destination /tmp/cmize-reset-codex-final/.agents/skills \
+  --skills reset-cursor-vscode-macos
+codex exec --sandbox read-only --ephemeral --skip-git-repo-check \
+  -C /tmp/cmize-reset-codex-final \
+  'Use $reset-cursor-vscode-macos explicitly for an audit-only smoke test. Read references/path-catalog.md using a read-only local command if needed, report its six confidence labels, and explain why Codex must stop after the read-only plan. Do not edit files or execute any target-changing command.'
+cursor agent --print --output-format text --mode ask --trust \
+  --workspace "$PWD" --plugin-dir "$PWD/src" \
+  '/reset-cursor-vscode-macos audit smoke only. Do not run shell commands and do not edit files. Explicitly load the skill, read references/path-catalog.md, then report: the selected mode, why mutation is blocked from Cursor, and the six confidence labels from the catalog. Stop after that.'
+```
+
+Result: validation passed; 27 tests passed; the Claude-target dry run selected the new skill; Codex `0.147.0` and Cursor explicitly loaded the skill and path catalog, selected `audit`, reported that target changes are unsupported from those hosts, and returned all six catalog labels. No files were edited by either smoke test. This is behavioral evidence, not host-enforced mutation denial.
+
 ## Claude Code
 
 Installation surfaces:
@@ -189,6 +212,7 @@ Commands:
 /cmize-skills:auto-review
 /cmize-skills:deep-research
 /cmize-skills:best-practices
+/cmize-skills:reset-cursor-vscode-macos
 ```
 
 Evidence record:
@@ -200,6 +224,7 @@ Evidence record:
 - `actor-critic-mode`: package-shape and harness self-tests passed; fresh role dispatch and host receipt behavior were not replayed on Claude Code.
 - Independent reviewer: not testable.
 - `deep-research` web/isolation: not testable.
+- `reset-cursor-vscode-macos`: static package checks and a Claude-target direct-install dry run passed. Claude discovery, explicit-only behavior, reference loading, and standalone mutation gates remain untested because Claude Code is unavailable.
 - Result: `blocked` for host support; package-shape support is covered by static validation only.
 
 ## Codex
@@ -223,7 +248,7 @@ codex plugin add cmize-skills@cmize-skills
 Evidence record:
 
 - Version: `codex-cli 0.145.0`.
-- Discovery: passed from an isolated Codex home after direct copy; the agent found all five canonical skills.
+- Discovery: passed from an isolated Codex home after direct copy; the agent found all five skills shipped in `v1.0.0`.
 - Direct-copy installer: dry run and copy passed into `/private/tmp/cmize-codex-project/.agents/skills`; a second legacy-surface copy into `.codex/skills` also passed.
 - Marketplace: local Codex `v0.1.0` replay passed marketplace add and `codex plugin add cmize-skills@cmize-skills --json`; installed version `0.1.0`.
 - `auto-review` manual-only control: `src/skills/auto-review/agents/openai.yaml` declares `allow_implicit_invocation: false`; native runtime behavior remains a release-gate check.
@@ -231,6 +256,7 @@ Evidence record:
 - Negative smoke path: explicit adversarial-review and best-practices prompts reported that auto-review was not invoked; this is behavioral evidence, not a security guarantee.
 - Independent reviewer: explicit single-pass smoke test launched one separate worker and returned `insufficient evidence`; no files were edited.
 - `deep-research` web/isolation: canonical Light run preflight passed with 3/3 distinct workers and all three lanes; 3/3 research workers completed, but the required critique failed after two thread-limit launch attempts. The run is `terminal coverage failure`, so deep-research is not claimed fully supported.
+- `reset-cursor-vscode-macos`: explicit audit-only invocation and reference loading passed on Codex `0.147.0`; the skill returned the catalog labels and stopped before reset guidance. Its Codex metadata disables implicit invocation, but negative implicit-invocation behavior remains untested.
 - Residual host issue: Codex emitted a model-cache schema warning in one run and later a model-refresh timeout; the successful skill and marketplace gates were unaffected.
 - Result: `partial`; adversarial-review, auto-review, and best-practices passed explicit smoke tests, actor-critic-mode passed package self-tests but has no named role-arm evidence, and deep-research remains blocked by its required critique-stage capability.
 
@@ -262,6 +288,7 @@ Then install `cmize-skills` from Cursor's Plugins/marketplaces UI:
 /auto-review
 /deep-research
 /best-practices
+/reset-cursor-vscode-macos
 ```
 
 Evidence record:
@@ -274,6 +301,7 @@ Evidence record:
 - Negative smoke path: explicit adversarial-review and best-practices prompts reported that auto-review was not invoked; this is behavioral evidence, not a security guarantee.
 - Independent reviewer: explicit single-pass smoke test launched a separate Cursor subagent and returned `not ready`; no files were edited.
 - `deep-research` web/isolation: Light preflight launched 3 probes, 2 completed and 1 failed; no research workers launched because official access was blocked and public-user access was restricted. The skill correctly returned `blocked — capability gap`.
+- `reset-cursor-vscode-macos`: read-only explicit invocation and reference loading passed. The skill selected `audit`, returned the path-catalog labels, and reported that Cursor target changes are unsupported. This is behavioral evidence, not host-enforced mutation denial.
 - Result: `partial`; adversarial-review, auto-review, and best-practices passed explicit smoke tests, actor-critic-mode passed package self-tests but has no named role-arm evidence, and deep-research is correctly blocked for this environment.
 
 ## Direct-install evidence

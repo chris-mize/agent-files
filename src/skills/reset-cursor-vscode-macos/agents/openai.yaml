@@ -1,0 +1,7 @@
+interface:
+  display_name: "Reset Cursor and VS Code on macOS"
+  short_description: "Audit and guide reversible editor resets"
+  default_prompt: "Use $reset-cursor-vscode-macos to audit Cursor or VS Code state on macOS. In Codex, stop after the read-only plan; target changes require standalone Claude Code and manual Finder actions."
+
+policy:
+  allow_implicit_invocation: false

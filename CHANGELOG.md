@@ -2,6 +2,12 @@
 
 All notable changes to the `cmize-skills` bundle are recorded here. The bundle uses one release version; individual skills do not have independent versions.
 
+## [Unreleased]
+
+### Added
+
+- `reset-cursor-vscode-macos`, an explicit, human-supervised macOS workflow for auditing and reversibly resetting known local Cursor and VS Code state, using native app removal before residual cleanup, and retaining old profiles as inactive archives with an explicit post-test recovery choice.
+
 ## [1.0.0] - 2026-08-10
 
 ### Added

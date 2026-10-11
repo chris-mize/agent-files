@@ -1,6 +1,6 @@
 # cmize-skills
 
-Portable Agent Skills for adversarial review, actor-critic quality, review orchestration, pluralistic research, and quality checks.
+Portable Agent Skills for adversarial review, actor-critic quality, review orchestration, pluralistic research, quality checks, and macOS editor recovery.
 
 The public repository is `chris-mize/portable-skills`. The published plugin is named `cmize-skills`. One canonical skill tree lives in [`src/skills/`](src/skills/); Claude Code, Codex, and Cursor metadata point at that same tree. The repository does not generate or maintain copied skill bodies per host.
 
@@ -11,6 +11,7 @@ The public repository is `chris-mize/portable-skills`. The published plugin is n
 - `auto-review` — explicitly run an independent adversarial review and then rewrite or safely fix the bounded artifact.
 - `deep-research` — research across official/primary, real-user, and independent-expert lanes with claim-level evidence.
 - `best-practices` — raise the quality floor for substantive implementation, planning, research, and review work.
+- `reset-cursor-vscode-macos` — audit and reversibly reset known local Cursor and VS Code state on macOS, then guide a separately confirmed uninstall before manual reinstall.
 
 `auto-review` is intentionally explicit-only. Prompt text is guidance, not a security boundary; the package uses each host's native manual-invocation metadata where available and release evidence records any remaining gaps.
 
@@ -40,6 +41,7 @@ The plugin-qualified commands are:
 /cmize-skills:auto-review
 /cmize-skills:deep-research
 /cmize-skills:best-practices
+/cmize-skills:reset-cursor-vscode-macos
 ```
 
 ### Codex
@@ -51,7 +53,7 @@ codex plugin marketplace add https://github.com/chris-mize/portable-skills.git
 codex plugin add cmize-skills@cmize-skills
 ```
 
-If the installed Codex surface uses the interactive picker, open `/plugins`, select the `cmize-skills` marketplace entry, and enable the plugin. Invoke skills explicitly with `$actor-critic-mode`, `$auto-review`, `$adversarial-review`, `$deep-research`, or `$best-practices`.
+If the installed Codex surface uses the interactive picker, open `/plugins`, select the `cmize-skills` marketplace entry, and enable the plugin. Invoke skills explicitly with `$actor-critic-mode`, `$auto-review`, `$adversarial-review`, `$deep-research`, `$best-practices`, or `$reset-cursor-vscode-macos`.
 
 ### Cursor
 
@@ -61,7 +63,7 @@ Add the repository marketplace with the Cursor Agent CLI, then select `cmize-ski
 cursor agent plugin marketplace add https://github.com/chris-mize/portable-skills.git
 ```
 
-Select the `cmize-skills` entry and install it. Invoke the installed skills explicitly with `/actor-critic-mode`, `/auto-review`, `/adversarial-review`, `/deep-research`, or `/best-practices`.
+Select the `cmize-skills` entry and install it. Invoke the installed skills explicitly with `/actor-critic-mode`, `/auto-review`, `/adversarial-review`, `/deep-research`, `/best-practices`, or `/reset-cursor-vscode-macos`.
 
 The exact UI labels and CLI availability are version-dependent; see [`docs/compatibility.md`](docs/compatibility.md) for tested surfaces.
 
@@ -173,7 +175,8 @@ src/
     ├── actor-critic-mode/
     ├── auto-review/
     ├── best-practices/
-    └── deep-research/
+    ├── deep-research/
+    └── reset-cursor-vscode-macos/
 ```
 
 The shared `SKILL.md` files use the Agent Skills format. Platform differences live in native manifests, Codex metadata, and the `references/platforms/` files inside the skills. The deep-research protocol is vendored under `src/skills/deep-research/references/protocol/` so links remain package-relative.
@@ -183,6 +186,7 @@ The shared `SKILL.md` files use the Agent Skills format. Platform differences li
 - Installation and validation use Python's standard library only.
 - `deep-research` requires a host that can provide genuinely isolated, web-capable workers. It must stop and report a capability gap when that cannot be verified.
 - `auto-review` requires a genuinely independent reviewer. A same-context self-review must not be labeled independent.
+- `reset-cursor-vscode-macos` is a human-supervised recovery procedure, not an enforcement boundary. It removes the verified app before residual-state cleanup, retains old profiles as inactive archives, and asks after the clean-state test whether to keep them reference-only, recover selected configuration, or perform a warned full-profile rollback. Reset, restore, and uninstall guidance requires an interactive standalone Claude Code CLI session outside Cursor and VS Code, and the user performs every target rename or app-removal action manually. Cursor and Codex use is audit-only; Claude runtime behavior is untested until recorded in [`docs/compatibility.md`](docs/compatibility.md).
 - Manual-only invocation metadata can be checked by hosts, but no prose skill is a security control. Do not use these skills as authorization, secret-handling, or compliance enforcement.
 - Research lanes may be restricted by login requirements, robots policies, network access, or unavailable services. The report must preserve those gaps.
 

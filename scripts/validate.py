@@ -22,6 +22,7 @@ EXPECTED_SKILLS = {
     "auto-review",
     "deep-research",
     "best-practices",
+    "reset-cursor-vscode-macos",
 }
 PLUGIN_MANIFESTS = (
     "src/.claude-plugin/plugin.json",
@@ -355,6 +356,7 @@ def _validate_codex_policy(root: Path, errors: list[str]) -> None:
         root / "src/skills/auto-review/agents/openai.yaml": False,
         root / "src/skills/actor-critic-mode/agents/openai.yaml": False,
         root / "src/skills/deep-research/agents/openai.yaml": True,
+        root / "src/skills/reset-cursor-vscode-macos/agents/openai.yaml": False,
     }
     for path, expected_value in expected.items():
         if not path.is_file():
