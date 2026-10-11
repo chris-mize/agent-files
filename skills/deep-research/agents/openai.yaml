@@ -1,0 +1,7 @@
+interface:
+  display_name: "Deep Research"
+  short_description: "Pluralistic subagent research across source classes"
+  default_prompt: "Use deep research to investigate this question across official sources, real-user reports, and independent experts."
+
+policy:
+  allow_implicit_invocation: true
