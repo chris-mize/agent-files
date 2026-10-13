@@ -6,7 +6,7 @@ from pathlib import Path
 
 import typer
 
-from agent_files.execute import EmptyModelsError, execute
+from agent_files.execute import EmptyModelsError, PromptError, execute
 from agent_files.github import promote as promote_issue
 from agent_files.install import install as install_artifacts
 from agent_files.install import smoke
@@ -41,6 +41,9 @@ def run(
             max_usd=max_usd,
         )
     except EmptyModelsError as exc:
+        raise typer.Exit(2) from exc
+    except PromptError as exc:
+        typer.echo(str(exc), err=True)
         raise typer.Exit(2) from exc
     failed = [r for r in results if not r.passed and r.status != "skipped"]
     for result in results:

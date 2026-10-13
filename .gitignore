@@ -11,5 +11,6 @@ uv.lock.bak
 # Quarantined candidate prompts (fixtures live under tests/)
 evals/candidates/*
 !evals/candidates/.gitkeep
+!evals/candidates/b88bf53b7b0341dfeb465ff2823a802a27f5a132aacaa845c8cb9539f64ffd5e.txt
 agents/evals/candidates/*
 skills/**/evals/candidates/*

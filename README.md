@@ -26,7 +26,13 @@ agent-files report
 
 Eval 2 is plumbing (fake adapter / CI). Eval 3 is the first real `AGENTS.md` eval (standalone `SPEC.md`).
 
-`run` exits 2 if `models` in `agent-files.toml` is empty.
+`models` in `agent-files.toml` accepts a flat list shared by adapters or a table of adapter-specific lists. `run` and `review` exit 2 when the selected adapter has no models. Each run batch checks one automatic canary per model; explicitly selecting eval 1 honors `--repeats`.
+
+`codex_reasoning_effort` optionally pins Codex effort; Cursor effort is encoded in its model ID. The baseline configuration pins all four models to high, matching Chris's configured settings. Comparison identity includes the effective prompt hash and pinned effort, so these results cannot be silently mixed with different prompts or efforts.
+
+Comparison identities from older runs differ from this baseline: `keep` and comparison reports refuse to mix them. Older ledger entries remain intact.
+
+Referenced prompt files must exist and match their recorded SHA-256 hash before any model call. Eval 3's frozen candidate prompt is tracked; other candidate prompts remain quarantined. Frozen eval records and graders are unchanged.
 
 ## Promote a GitHub issue
 

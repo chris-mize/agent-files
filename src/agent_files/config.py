@@ -24,7 +24,8 @@ class ReviewConfig(BaseModel):
 class AppConfig(BaseModel):
     schema_version: Literal[1] = 1
     default_adapter: str = "cursor"
-    models: list[str] = Field(default_factory=list)
+    models: list[str] | dict[str, list[str]] = Field(default_factory=list)
+    codex_reasoning_effort: Literal["none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"] | None = None
     timeout_seconds: int = 300
     max_runs_per_invocation: int = 20
     max_runs_per_day: int = 50
@@ -44,6 +45,11 @@ class AppConfig(BaseModel):
     )
     graders: GradersConfig = Field(default_factory=GradersConfig)
     review: ReviewConfig = Field(default_factory=ReviewConfig)
+
+    def models_for(self, adapter: str) -> list[str]:
+        if isinstance(self.models, dict):
+            return self.models.get(adapter, [])
+        return self.models
 
     def cache_path(self) -> Path:
         return Path(self.cache_dir).expanduser().resolve()

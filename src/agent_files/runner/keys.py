@@ -55,6 +55,8 @@ def comparison_key(
     uv_lock_hash: str,
     os_name: str | None = None,
     config_hash: str | None = None,
+    prompt_hash: str | None = None,
+    reasoning_effort: str | None = None,
 ) -> str:
     payload = {
         "fixture_hash": fixture_hash,
@@ -65,6 +67,10 @@ def comparison_key(
         "os": os_name or f"{platform.system()}-{platform.release()}",
         "effective_config_hash": config_hash or effective_config_hash(),
     }
+    if prompt_hash is not None:
+        payload["prompt_hash"] = prompt_hash
+    if reasoning_effort is not None:
+        payload["reasoning_effort"] = reasoning_effort
     return sha256_bytes(json.dumps(payload, sort_keys=True).encode())
 
 

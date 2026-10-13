@@ -75,11 +75,11 @@ Cannot prove (a) or (b) without a working login. Crowded keep-gate on Codex is *
 
 ## Models (Cursor `--list-models`)
 
-Eval default (cheap, sentinel-proven): `composer-2.5-fast`.
+Spike-era eval default (cheap, sentinel-proven): `composer-2.5-fast`.
 
 Full ids observed (non-exhaustive of the printed list): `auto`, `composer-2.5`, `composer-2.5-fast`, `cursor-grok-4.6-high-fast`, `gemini-3.7-flash-high`, plus many `gpt-5.3-codex-*`, `gpt-5.6-sol-*`, `claude-opus-*`, `claude-sonnet-*` variants.
 
-`agent-files.toml` `models` is filled with `composer-2.5-fast` only so `run` is cost-bounded. Expand locally if needed.
+The current `agent-files.toml` uses adapter-specific model lists and explicit high effort for the four-model baseline; exact IDs and results are recorded in `docs/verify.md`.
 
 ## Where each host reads the always-on instructions
 

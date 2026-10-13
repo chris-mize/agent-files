@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 from agent_files.adapters import get_runner
@@ -64,7 +65,10 @@ def review_gate(
 ) -> Path:
     root = repo or find_repo_root()
     cfg = load_config(root)
-    if not cfg.models:
+    adapter_name = adapter or cfg.default_adapter
+    models = cfg.models_for(adapter_name)
+    if not models:
+        print(f"no models configured for adapter {adapter_name}", file=sys.stderr)
         raise SystemExit(2)
     run_id = f"review-{gate}-{artifact.replace('/', '-')}"
     reserve(
@@ -76,7 +80,7 @@ def review_gate(
         max_usd=None,
         cost_state="subscription_quota",
     )
-    active = runner or get_runner(adapter or cfg.default_adapter, cfg, root)
+    active = runner or get_runner(adapter_name, cfg, root)
     spec = RunSpec(
         eval_id=eval_id or 0,
         prompt=(
@@ -85,7 +89,7 @@ def review_gate(
             '{"verdict": "...", "findings": []}'
         ),
         adapter=active.name,
-        model=cfg.models[0],
+        model=models[0],
         timeout_seconds=cfg.timeout_seconds,
         crowded=False,
         artifact="review",

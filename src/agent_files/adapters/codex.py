@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import uuid
@@ -20,6 +21,16 @@ class CodexRunner:
     def __init__(self, config: AppConfig, repo: Path) -> None:
         self.config = config
         self.repo = repo
+        self.cli_version = "missing"
+        binary = shutil.which("codex")
+        if binary:
+            completed = spawn_process(
+                [binary, "--version"],
+                cwd=repo,
+                env=allowed_env(["PATH", "HOME", "USER", "LANG", "TERM"]),
+                timeout_seconds=30,
+            )
+            self.cli_version = (completed.stdout or completed.stderr).strip() or "unknown"
 
     def prepare(self, spec: RunSpec) -> Path:
         run_id = str(uuid.uuid4())
@@ -57,9 +68,10 @@ class CodexRunner:
             "--skip-git-repo-check",
             spec.prompt,
         ]
+        if self.config.codex_reasoning_effort is not None:
+            argv[-1:-1] = ["-c", f"model_reasoning_effort={json.dumps(self.config.codex_reasoning_effort)}"]
         if spec.model:
-            argv.insert(-1, spec.model)
-            argv.insert(-1, "-m")
+            argv[-1:-1] = ["-m", spec.model]
         return spawn_process(
             argv,
             cwd=workspace,
