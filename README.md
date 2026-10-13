@@ -2,28 +2,20 @@
 
 Canonical home for Chris Mize’s personal `AGENTS.md`, selected Agent Skills, colocated `evals.json`, and a tiny CLI that runs those evals on this machine’s Cursor and Codex CLIs.
 
-This laptop is the tuner. A work laptop installs artifacts and can run evals with a local login.
+## Install (any machine)
 
-## Install (work laptop)
-
-After a tagged release:
+Requires [uv](https://docs.astral.sh/uv/).
 
 ```bash
-uv tool install git+https://github.com/chris-mize/agent-files@v0.1.0
-```
-
-Until a tag exists, from a clone:
-
-```bash
-uv tool install -e .
+git clone https://github.com/chris-mize/agent-files.git && cd agent-files
 ./install.sh --dry-run
 ./install.sh
-agent-files install --smoke
+./install.sh --smoke
 ```
 
-`install.sh` copies skills to destinations recorded in `docs/spike-adapters.md`. It **refuses** to write through `realpath` into a git repo whose origin is not `chris-mize/agent-files` (today `~/AGENTS.md`, `~/.codex/AGENTS.md`, and `~/.claude/CLAUDE.md` all resolve into `dev-tools`).
+After `git pull`, run `./install.sh` again; `--smoke` fails while the live instructions differ from the repo.
 
-Cursor has no safe global `AGENTS.md` on this machine. Paste `agents/AGENTS.md` into Cursor User Rules if you want it always on.
+`install.sh` writes `agents/AGENTS.md` to `~/AGENTS.md` (Cursor) and links `~/.codex/AGENTS.md` (Codex) and `~/.claude/CLAUDE.md` (Claude Code and the Claude desktop Code tab) to it. It copies every skill in `skills/` to `~/.agents/skills` (Codex and Cursor) and `~/.claude/skills` (Claude Code). Tools not installed on the machine are skipped. Destinations and host behavior are recorded in `docs/spike-adapters.md`. `./install.sh --uninstall` restores the previous files.
 
 ## Run
 
@@ -49,7 +41,7 @@ agent-files promote https://github.com/chris-mize/agent-files/issues/1 --artifac
 
 ```
 agents/AGENTS.md
-skills/{best-practices,auto-review,adversarial-review,improve-against-evals}/
+skills/<name>/SKILL.md
 agents/evals/evals.json
 docs/spike-adapters.md
 ```

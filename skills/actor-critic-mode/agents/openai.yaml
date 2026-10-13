@@ -1,0 +1,7 @@
+interface:
+  display_name: "Actor-Critic Mode"
+  short_description: "Bounded generator-critic operating mode"
+  default_prompt: "Use $actor-critic-mode for explicitly invoked high-stakes coding or research tasks."
+
+policy:
+  allow_implicit_invocation: false

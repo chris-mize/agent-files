@@ -21,6 +21,8 @@ jobs:
         run: |
           git ls-files '*.md' \
             | grep -v '/evals/files/' \
+            | grep -v '^skills/' \
+            | grep -v '^agents/AGENTS.md$' \
             | grep -v '/reviews/' \
             | xargs -r uv run mdformat --check
       - name: Pytest

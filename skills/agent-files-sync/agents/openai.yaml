@@ -1,0 +1,7 @@
+interface:
+  display_name: "agent-files sync"
+  short_description: "Pull and install AGENTS.md and skills"
+  default_prompt: "Use $agent-files-sync to update this machine's AGENTS.md and skills from agent-files."
+
+policy:
+  allow_implicit_invocation: false

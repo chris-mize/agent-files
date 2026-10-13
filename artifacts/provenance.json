@@ -2,28 +2,7 @@
   "items": [
     {
       "path": "agents/AGENTS.md",
-      "source_path": "/Users/cmize/Projects/dev-tools/dotfiles/agents/AGENTS.md",
-      "sha256": "a5366c26490a1c2fd55ee586e885a1d98a3ebdf7f75ea5536f16788366028d70",
-      "imported_at": "2026-08-24T19:06:33.168434+00:00",
-      "always_on_baseline_bytes": 7203
-    },
-    {
-      "path": "skills/best-practices",
-      "source_path": "/Users/cmize/Projects/portable-skills/src/skills/best-practices",
-      "sha256": "26db43f5ee9a4020421f8ba31c166bb6ef55c6b6a9a44b903b285938fed0cf9b",
-      "imported_at": "2026-08-24T19:06:33.168434+00:00"
-    },
-    {
-      "path": "skills/auto-review",
-      "source_path": "/Users/cmize/Projects/portable-skills/src/skills/auto-review",
-      "sha256": "c0fa082ae4f5e2f3fc5158afbd191db75206d74c4a662c2b5332e32f4a881c10",
-      "imported_at": "2026-08-24T19:06:33.168434+00:00"
-    },
-    {
-      "path": "skills/adversarial-review",
-      "source_path": "/Users/cmize/Projects/portable-skills/src/skills/adversarial-review",
-      "sha256": "7b4fe2889cc18f519093ecec425c17e931880f861bdf47f2e36589225c1b9f54",
-      "imported_at": "2026-08-24T19:06:33.168434+00:00"
+      "always_on_baseline_bytes": 7782
     }
   ]
 }
