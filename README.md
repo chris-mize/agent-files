@@ -41,7 +41,7 @@ agent-files promote https://github.com/chris-mize/agent-files/issues/1 --artifac
 
 ```
 agents/AGENTS.md
-skills/{best-practices,auto-review,adversarial-review,improve-against-evals}/
+skills/<name>/SKILL.md
 agents/evals/evals.json
 docs/spike-adapters.md
 ```

@@ -9,7 +9,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 COMMON_REFERENCES = (
     "protocol.md",
     "routing.md",

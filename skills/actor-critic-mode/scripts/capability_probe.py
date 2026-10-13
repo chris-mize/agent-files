@@ -12,9 +12,9 @@ import argparse
 import json
 import re
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence
-
+from typing import Any
 
 PROFILE_ROLES = {
     "grok-oneshot": {},
@@ -40,8 +40,8 @@ def model_matches(observed: Any, required: str) -> bool:
     return observed == required
 
 
-def probe(snapshot: Dict[str, Any], host: str, profile: str) -> Dict[str, Any]:
-    reasons: List[str] = []
+def probe(snapshot: dict[str, Any], host: str, profile: str) -> dict[str, Any]:
+    reasons: list[str] = []
     if not isinstance(snapshot, dict):
         return {
             "schema": "actor-critic-mode/capability-receipt/v1",
@@ -137,7 +137,7 @@ def probe(snapshot: Dict[str, Any], host: str, profile: str) -> Dict[str, Any]:
         reasons.append("role receipts are missing")
         roles = {}
 
-    actual_models: Dict[str, Dict[str, Any]] = {
+    actual_models: dict[str, dict[str, Any]] = {
         "controller": {
             "requested": controller.get("requested_model"),
             "observed": controller.get("observed_model"),
@@ -145,7 +145,7 @@ def probe(snapshot: Dict[str, Any], host: str, profile: str) -> Dict[str, Any]:
             "speed": controller.get("speed"),
         }
     }
-    role_checks: Dict[str, Dict[str, Any]] = {
+    role_checks: dict[str, dict[str, Any]] = {
         "controller": {
             "pinned": controller.get("pinned"),
             "exposes_identity": controller.get("exposes_identity"),
@@ -312,7 +312,7 @@ def self_test() -> None:
     print("self-test: ok")
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--host", choices=("claude", "codex", "cursor"), required=False)
     parser.add_argument("--profile", choices=sorted(PROFILE_ROLES), required=False)

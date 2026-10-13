@@ -16,9 +16,9 @@ import re
 import statistics
 import sys
 from collections import defaultdict
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
-
+from typing import Any
 
 SCHEMA = "actor-critic-mode/run/v1"
 ENVIRONMENT_FIELDS = (
@@ -30,7 +30,7 @@ ENVIRONMENT_FIELDS = (
 )
 
 
-def environment_key(environment: Dict[str, Any]) -> str:
+def environment_key(environment: dict[str, Any]) -> str:
     payload = {field: environment[field] for field in ENVIRONMENT_FIELDS}
     encoded = json.dumps(
         payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")
@@ -60,7 +60,7 @@ def is_real_value(value: Any) -> bool:
     return False
 
 
-def _number(value: Any, field: str) -> Tuple[Optional[float], Optional[str]]:
+def _number(value: Any, field: str) -> tuple[float | None, str | None]:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         return None, f"{field} must be numeric"
     value = float(value)
@@ -69,8 +69,8 @@ def _number(value: Any, field: str) -> Tuple[Optional[float], Optional[str]]:
     return value, None
 
 
-def validate_record(record: Dict[str, Any], line: int) -> List[str]:
-    errors: List[str] = []
+def validate_record(record: dict[str, Any], line: int) -> list[str]:
+    errors: list[str] = []
     if record.get("schema") != SCHEMA:
         errors.append(f"line {line}: schema must be {SCHEMA}")
     if record.get("run_status") == "unrunnable":
@@ -269,7 +269,10 @@ def validate_record(record: Dict[str, Any], line: int) -> List[str]:
                 if not isinstance(checks, dict):
                     errors.append(f"line {line}: invalid capability checks for {role}")
                 elif role == "controller":
-                    if any(checks.get(key) is not True for key in ("pinned", "exposes_identity")) or checks.get("fallback") is not False:
+                    if (
+                        any(checks.get(key) is not True for key in ("pinned", "exposes_identity"))
+                        or checks.get("fallback") is not False
+                    ):
                         errors.append(f"line {line}: controller capability checks are incomplete")
                 else:
                     if any(
@@ -474,9 +477,9 @@ def validate_record(record: Dict[str, Any], line: int) -> List[str]:
     return errors
 
 
-def load_records(path: Path) -> Tuple[List[Dict[str, Any]], List[str]]:
-    records: List[Dict[str, Any]] = []
-    errors: List[str] = []
+def load_records(path: Path) -> tuple[list[dict[str, Any]], list[str]]:
+    records: list[dict[str, Any]] = []
+    errors: list[str] = []
     try:
         handle = path.open(encoding="utf-8")
     except OSError as exc:
@@ -497,7 +500,7 @@ def load_records(path: Path) -> Tuple[List[Dict[str, Any]], List[str]]:
             errors.extend(validate_record(value, line_number))
             records.append(value)
 
-    seen: Dict[Tuple[Any, ...], str] = {}
+    seen: dict[tuple[Any, ...], str] = {}
 
     def dedupe_value(value: Any) -> Any:
         try:
@@ -525,7 +528,7 @@ def load_records(path: Path) -> Tuple[List[Dict[str, Any]], List[str]]:
     return records, errors
 
 
-def load_manifest(path: Path) -> Tuple[Dict[str, Any], List[str]]:
+def load_manifest(path: Path) -> tuple[dict[str, Any], list[str]]:
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
@@ -536,14 +539,14 @@ def load_manifest(path: Path) -> Tuple[Dict[str, Any], List[str]]:
 
 
 def validate_manifest(
-    manifest: Dict[str, Any],
-    records: Sequence[Dict[str, Any]],
+    manifest: dict[str, Any],
+    records: Sequence[dict[str, Any]],
     candidate: str,
     baseline: str,
-    scaffold: Optional[str],
+    scaffold: str | None,
     expected_repetitions: int,
-) -> List[str]:
-    errors: List[str] = []
+) -> list[str]:
+    errors: list[str] = []
     if manifest.get("schema") != "study-manifest/v1":
         errors.append("manifest schema must be study-manifest/v1")
     if (
@@ -771,7 +774,7 @@ def validate_manifest(
     return errors
 
 
-def _calls_ok(record: Dict[str, Any]) -> bool:
+def _calls_ok(record: dict[str, Any]) -> bool:
     ledger = record.get("call_ledger")
     return isinstance(ledger, list) and all(
         isinstance(call, dict) and call.get("status") == "ok"
@@ -779,7 +782,7 @@ def _calls_ok(record: Dict[str, Any]) -> bool:
     )
 
 
-def _valid_success(record: Dict[str, Any]) -> bool:
+def _valid_success(record: dict[str, Any]) -> bool:
     quality = record["quality"]
     return (
         not record.get("human_intervention", False)
@@ -792,7 +795,7 @@ def _valid_success(record: Dict[str, Any]) -> bool:
     )
 
 
-def _quality_key(record: Dict[str, Any]) -> Tuple[int, int, int]:
+def _quality_key(record: dict[str, Any]) -> tuple[int, int, int]:
     quality = record["quality"]
     if (
         record.get("human_intervention", False)
@@ -806,7 +809,7 @@ def _quality_key(record: Dict[str, Any]) -> Tuple[int, int, int]:
     return 1, -missed, -defects
 
 
-def _outcome(candidate: Dict[str, Any], baseline: Dict[str, Any]) -> str:
+def _outcome(candidate: dict[str, Any], baseline: dict[str, Any]) -> str:
     candidate_key = _quality_key(candidate)
     baseline_key = _quality_key(baseline)
     if candidate_key > baseline_key:
@@ -816,7 +819,7 @@ def _outcome(candidate: Dict[str, Any], baseline: Dict[str, Any]) -> str:
     return "tie"
 
 
-def _cost_per_success(records: Sequence[Dict[str, Any]]) -> Optional[float]:
+def _cost_per_success(records: Sequence[dict[str, Any]]) -> float | None:
     total = sum(float(record["cost"]["units"]) for record in records)
     successes = sum(1 for record in records if _valid_success(record))
     if successes == 0:
@@ -824,23 +827,23 @@ def _cost_per_success(records: Sequence[Dict[str, Any]]) -> Optional[float]:
     return total / successes
 
 
-def _median(values: Sequence[Optional[float]]) -> Optional[float]:
+def _median(values: Sequence[float | None]) -> float | None:
     if not values or any(value is None or not math.isfinite(value) for value in values):
         return None
     return float(statistics.median([value for value in values if value is not None]))
 
 
 def index_records(
-    records: Iterable[Dict[str, Any]],
-) -> Dict[Tuple[str, str, int], Dict[str, Any]]:
+    records: Iterable[dict[str, Any]],
+) -> dict[tuple[str, str, int], dict[str, Any]]:
     return {
         (record["profile"], record["task_id"], record["repetition"]): record
         for record in records
     }
 
 
-def usage_summary(records: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
-    usable: List[Tuple[Dict[str, Any], float, int, int, int]] = []
+def usage_summary(records: Sequence[dict[str, Any]]) -> dict[str, Any]:
+    usable: list[tuple[dict[str, Any], float, int, int, int]] = []
     for record in records:
         usage = record.get("usage")
         if not isinstance(usage, dict) or any(
@@ -886,8 +889,8 @@ def usage_summary(records: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
     }
 
 
-def secondary_summary(records: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
-    usable: List[Tuple[Dict[str, Any], float, float, float, str, int]] = []
+def secondary_summary(records: Sequence[dict[str, Any]]) -> dict[str, Any]:
+    usable: list[tuple[dict[str, Any], float, float, float, str, int]] = []
     valid_directions = {
         "incorrect_to_correct",
         "correct_to_incorrect",
@@ -962,14 +965,13 @@ def secondary_summary(records: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
 
 
 def compare_pair(
-    records: Sequence[Dict[str, Any]],
+    records: Sequence[dict[str, Any]],
     candidate_profile: str,
     baseline_profile: str,
     expected_repetitions: int,
     min_net_wins: int,
     cost_gate: bool,
-) -> Dict[str, Any]:
-    indexed = index_records(records)
+) -> dict[str, Any]:
     candidate = [
         record
         for record in records
@@ -980,27 +982,27 @@ def compare_pair(
         for record in records
         if record["profile"] == baseline_profile
     ]
-    candidate_by_task: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
-    baseline_by_task: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+    candidate_by_task: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    baseline_by_task: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for record in candidate:
         candidate_by_task[record["task_id"]].append(record)
     for record in baseline:
         baseline_by_task[record["task_id"]].append(record)
 
     task_ids = sorted(set(candidate_by_task) | set(baseline_by_task))
-    task_results: List[Dict[str, Any]] = []
+    task_results: list[dict[str, Any]] = []
     wins = losses = ties = 0
-    pair_issues: List[str] = []
-    cost_issues: List[str] = []
-    candidate_costs: List[Optional[float]] = []
-    baseline_costs: List[Optional[float]] = []
+    pair_issues: list[str] = []
+    cost_issues: list[str] = []
+    candidate_costs: list[float | None] = []
+    baseline_costs: list[float | None] = []
 
     for task_id in task_ids:
         candidates = sorted(candidate_by_task.get(task_id, []), key=lambda item: item["repetition"])
         baselines = sorted(baseline_by_task.get(task_id, []), key=lambda item: item["repetition"])
         repetitions = list(range(1, expected_repetitions + 1))
-        outcomes: List[str] = []
-        task_issues: List[str] = []
+        outcomes: list[str] = []
+        task_issues: list[str] = []
         candidate_reps = {record["repetition"]: record for record in candidates}
         baseline_reps = {record["repetition"]: record for record in baselines}
 
@@ -1107,7 +1109,7 @@ def compare_pair(
     }
 
 
-def safety_status(records: Sequence[Dict[str, Any]]) -> str:
+def safety_status(records: Sequence[dict[str, Any]]) -> str:
     postures = {
         record.get("capability_receipt", {}).get("write_scope_enforcement")
         for record in records
@@ -1123,15 +1125,15 @@ def safety_status(records: Sequence[Dict[str, Any]]) -> str:
 
 
 def evaluate(
-    records: Sequence[Dict[str, Any]],
+    records: Sequence[dict[str, Any]],
     candidate: str,
     baseline: str,
-    scaffold: Optional[str],
+    scaffold: str | None,
     expected_repetitions: int,
     min_net_wins: int,
     input_errors: Sequence[str],
-    manifest: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
+    manifest: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     profiles = sorted(
         {
             record.get("profile")
@@ -1226,7 +1228,7 @@ def evaluate(
             False,
         )
 
-    report: Dict[str, Any] = {
+    report: dict[str, Any] = {
         "schema": "actor-critic-mode/evaluation-report/v1",
         "candidate": candidate,
         "baseline": baseline,
@@ -1262,7 +1264,7 @@ def _synthetic_record(
     success: bool,
     missed: int,
     units: float,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     return {
         "schema": SCHEMA,
         "run_id": f"{profile}-{task_id}-{repetition}",
@@ -1362,7 +1364,7 @@ def _synthetic_record(
 
 
 def self_test() -> None:
-    records: List[Dict[str, Any]] = []
+    records: list[dict[str, Any]] = []
     for task_number in range(1, 5):
         task_id = f"dev-{task_number:02d}"
         for repetition in range(1, 4):
@@ -1411,7 +1413,7 @@ def self_test() -> None:
     print("self-test: ok")
 
 
-def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
+def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, help="sanitized JSONL run records")
     parser.add_argument("--manifest", type=Path, help="frozen study manifest")
@@ -1425,7 +1427,7 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     args = parse_args(argv)
     if args.self_test:
         self_test()
