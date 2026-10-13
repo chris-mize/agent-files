@@ -112,7 +112,7 @@ def _backup_path(dest: Path) -> Path:
     where a host would otherwise discover the backup as a duplicate skill."""
     if dest.is_dir():
         flat = str(dest.relative_to(Path.home()) if dest.is_relative_to(Path.home()) else dest).replace("/", "_")
-        return _unused(Path.home() / ".agent-files-backups" / flat.lstrip("_"))
+        return _unused(Path.home() / ".agent-files-backups" / flat.lstrip("._"))
     return _unused(dest.with_name(dest.name + BACKUP_SUFFIX))
 
 

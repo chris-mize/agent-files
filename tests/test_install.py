@@ -68,7 +68,7 @@ def test_existing_skill_folders_are_backed_up_outside_skill_dirs_and_stale_copie
 
     assert not stale.exists()
     backups = sorted(p.name for p in (home / ".agent-files-backups").iterdir())
-    assert backups == [".agents_skills_auto-review", ".agents_skills_best-practices"]
+    assert backups == ["agents_skills_auto-review", "agents_skills_best-practices"]
     smoke(repo=REPO)
 
     install(repo=REPO, uninstall=True)
