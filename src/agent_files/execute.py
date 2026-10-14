@@ -19,6 +19,7 @@ from agent_files.runner.base import Runner
 from agent_files.runner.ephemeral import repo_porcelain
 from agent_files.runner.keys import (
     comparison_key,
+    sha256_bytes,
     sha256_file,
     sha256_tree,
     uv_lock_hash,
@@ -27,8 +28,13 @@ from agent_files.runner.keys import (
 
 
 class EmptyModelsError(SystemExit):
-    def __init__(self) -> None:
+    def __init__(self, adapter: str) -> None:
+        print(f"no models configured for adapter {adapter}", file=sys.stderr)
         super().__init__(2)
+
+
+class PromptError(ValueError):
+    pass
 
 
 def evals_path(repo: Path, artifact: str) -> Path:
@@ -72,8 +78,12 @@ def resolve_prompt(item: EvalItem, repo: Path) -> str:
     rel = item.source.prompt_file
     if rel:
         path = repo / rel
-        if path.is_file():
-            return path.read_text(encoding="utf-8")
+        if not path.is_file():
+            raise PromptError(f"eval {item.id}: missing prompt file {rel}")
+        prompt = path.read_bytes().decode("utf-8")
+        if item.source.prompt_hash != f"sha256:{sha256_bytes(prompt.encode('utf-8'))}":
+            raise PromptError(f"eval {item.id}: prompt hash mismatch for {rel}")
+        return prompt
     return item.prompt
 
 
@@ -100,9 +110,10 @@ def execute(
     del allow_cross_version
     root = repo or find_repo_root()
     cfg = config or load_config(root)
-    if not cfg.models:
-        raise EmptyModelsError()
     adapter_name = adapter or cfg.default_adapter
+    models = cfg.models_for(adapter_name)
+    if not models:
+        raise EmptyModelsError(adapter_name)
     bundle = load_evals_file(evals_path(root, artifact))
     items = [e for e in bundle.evals if eval_id is None or e.id == eval_id]
     canary = next((e for e in bundle.evals if e.id == 1), None)
@@ -113,7 +124,13 @@ def execute(
         if ordered and item.id == ordered[0].id:
             continue
         ordered.append(item)
-    n = max(1, len(ordered) * len(cfg.models) * repeats)
+    scheduled = [(item, 1 if item.id == 1 and eval_id != 1 else repeats) for item in ordered]
+    prompts = {
+        item.id: resolve_prompt(item, root)
+        for item in ordered
+        if item.source.state != EvalState.CANDIDATE
+    }
+    n = max(1, sum(count for _, count in scheduled) * len(models))
     run_id = str(uuid.uuid4())
     tty = sys.stdin.isatty() if interactive is None else interactive
     cost_state = "unknown" if os.environ.get("CURSOR_API_KEY") and max_usd is not None else "subscription_quota"
@@ -138,14 +155,14 @@ def execute(
     ledger = ledger_path(cfg)
     overlay = overlay_for(root, artifact, ablation)
     before_porcelain = repo_porcelain(root)
-    for item in ordered:
+    for item, item_repeats in scheduled:
         if item.source.state == EvalState.CANDIDATE:
             results.append(
                 RunResult(
                     run_id=run_id,
                     eval_id=item.id,
                     adapter=adapter_name,
-                    model=cfg.models[0],
+                    model=models[0],
                     comparison_key="skipped",
                     variant_key="skipped",
                     passed=False,
@@ -154,11 +171,11 @@ def execute(
                 )
             )
             continue
-        for model in cfg.models:
-            for repeat_index in range(repeats):
+        for model in models:
+            for repeat_index in range(item_repeats):
                 spec = RunSpec(
                     eval_id=item.id,
-                    prompt=resolve_prompt(item, root),
+                    prompt=prompts[item.id],
                     adapter=adapter_name,
                     model=model,
                     timeout_seconds=cfg.timeout_seconds,
@@ -178,6 +195,8 @@ def execute(
                     cli_version=str(getattr(active, "cli_version", active.name)),
                     model=model,
                     uv_lock_hash=uv_lock_hash(root),
+                    prompt_hash=sha256_bytes(spec.prompt.encode("utf-8")),
+                    reasoning_effort=cfg.codex_reasoning_effort if adapter_name == "codex" else None,
                 )
                 var = variant_key(
                     overlay_hash=hash_path(overlay) if overlay.exists() else "none",

@@ -84,12 +84,13 @@ def append_entry(path: Path, entry: LedgerEntry) -> None:
 
 def today_spawn_count(entries: list[LedgerEntry], *, now: datetime | None = None) -> int:
     day = (now or datetime.now(UTC)).date().isoformat()
-    total = 0
+    by_run: dict[str, tuple[int, int]] = {}
     for entry in entries:
         started = entry.started_at[:10]
         if started == day:
-            total += max(entry.actual_spawns, entry.reserved_runs)
-    return total
+            reserved, spawned = by_run.get(entry.run_id, (0, 0))
+            by_run[entry.run_id] = (reserved + entry.reserved_runs, spawned + entry.actual_spawns)
+    return sum(max(reserved, spawned) for reserved, spawned in by_run.values())
 
 
 def reserve(

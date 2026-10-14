@@ -1,6 +1,6 @@
 schema_version = 1
 default_adapter = "cursor"
-models = ["composer-2.5-fast"]
+codex_reasoning_effort = "high"
 timeout_seconds = 300
 max_runs_per_invocation = 20
 max_runs_per_day = 50
@@ -9,6 +9,11 @@ min_repeats_for_keep = 5
 improve_max_iterations = 3
 cache_dir = "~/.cache/agent-files"
 env_allowlist = ["PATH", "HOME", "USER", "LANG", "TERM", "CURSOR_API_KEY"]
+
+[models]
+cursor = ["claude-opus-5-5-high", "claude-sonnet-5-5-high"]
+codex = ["gpt-6.1-sol", "gpt-6-luna"]
+fake = ["fake"]
 
 [graders]
 always_on_size_ratchet = true

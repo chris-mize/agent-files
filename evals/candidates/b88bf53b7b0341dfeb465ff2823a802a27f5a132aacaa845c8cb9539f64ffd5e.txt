@@ -1,0 +1,19 @@
+## Repro
+Ask an agent to produce an implementation spec for a small CLI while the conversation contains extra context (nicknames, “as we discussed”, prior decisions). The written SPEC.md still requires the chat to implement.
+
+## Expected
+SPEC.md is enough for a second agent (or a human who never saw the chat) to implement: goal, file tree, commands, defaults, tests, definition of done. No pointers at “the conversation.”
+
+## Actual
+Planning artifacts in this project needed the chat that authored them.
+
+## Artifact
+agents
+
+## Severity
+high
+
+## Public
+This issue is sanitized and may be public.
+
+Write SPEC.md in the workspace. Do not rely on this issue thread remaining available.
