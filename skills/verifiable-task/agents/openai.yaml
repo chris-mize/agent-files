@@ -1,0 +1,7 @@
+interface:
+  display_name: "Verifiable Task"
+  short_description: "Agree on the goal and prove the work is done"
+  default_prompt: "Use $verifiable-task to agree on my objective, completion criteria, verification tools, and any design choices, then carry the task through to verified completion."
+
+policy:
+  allow_implicit_invocation: true
