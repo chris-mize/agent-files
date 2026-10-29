@@ -28,7 +28,7 @@ Choose checks that fit the objective, whether or not they appear in these exampl
 
 ## 3. What tools do we need?
 
-Inspect the available tools, skills, command-line programs, test setup, browser, and agent facilities. Recommend tools that can produce the agreed evidence with the least time and tokens.
+Look for tools relevant to the agreed verification, using tool search when helpful. Stop once you have what you need. Recommend tools that can produce the agreed evidence with the least time and tokens.
 
 Ask about meaningful choices or missing access, with a recommendation: “You want the rendered components checked. I recommend the live browser with screenshots; Cypress would add repeatable interaction tests but needs setup. Which do you prefer?” Don't ask obvious questions about reading files or using Git. If required tools are unavailable, explain the gap and agree on a way forward.
 
