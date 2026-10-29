@@ -20,15 +20,15 @@ Clarify the result, scope, and constraints. Ask follow-up questions first, until
 
 ## 2. How will we know it's done?
 
-Suggest a few ways to verify the objective and recommend what is sufficient. Let the user define the required end behavior, tests, outputs, or other success criteria.
+Suggest a few ways to check the result and recommend what would be enough. Agree with the user on what must be true when the task is finished.
 
-For code, options include unit and integration tests, trying the running system through a browser or queries, screenshots, and recordings. Independent reviewers can check whether the code works and is the simplest sensible solution. They can also compare actual outputs—images, videos, or files—with the agreed target. For other work, choose checks suited to the result.
+For code, some possible options are unit and integration tests, trying the running system through a browser or queries, screenshots, and recordings. Independent reviewers can check whether the code works and is the simplest sensible solution. They can also compare actual outputs—images, videos, or files—with the agreed target. For other work, choose checks suited to the result.
 
-These are options, not a checklist. You decide which checks matter during each iteration. You don't need every check after every edit, but the agreed final criteria still have to pass.
+Choose checks that fit the objective, whether or not they appear in these examples. You decide which checks matter during each iteration. You don't need every check after every edit, but the agreed final criteria still have to pass.
 
 ## 3. What tools do we need?
 
-Inspect the available tools, skills, command-line programs, test setup, browser, and agent facilities. Propose how to produce the agreed evidence with the fastest, most token-efficient tools that can actually do the job.
+Inspect the available tools, skills, command-line programs, test setup, browser, and agent facilities. Recommend tools that can produce the agreed evidence with the least time and tokens.
 
 Ask about meaningful choices or missing access, with a recommendation: “You want the rendered components checked. I recommend the live browser with screenshots; Cypress would add repeatable interaction tests but needs setup. Which do you prefer?” Don't ask obvious questions about reading files or using Git. If required tools are unavailable, explain the gap and agree on a way forward.
 
