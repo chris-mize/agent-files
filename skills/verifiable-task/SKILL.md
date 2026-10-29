@@ -34,13 +34,13 @@ Explain the setup and make routine tool choices yourself. Ask about choices that
 
 ## 4. Which design should we use?
 
-Skip this for simple, direct work. For complex work:
+Use this step when a design choice could meaningfully affect the result, cost, or future changes. If the direction is already settled or there is one sensible approach, proceed with it.
 
-- Develop three genuinely different designs that meet the objective.
+- Develop up to three credible alternatives that meet the objective.
 - Have them reviewed independently. Also give a separate agent the objective and constraints to look for solutions you missed. Prefer different capable models when available; reviewers must not recruit more reviewers.
-- Reconcile the findings and present the strongest three options, their benefits and tradeoffs, and your recommendation. Ask the user to choose before implementing.
+- Use the findings to narrow the options. When a meaningful choice remains, explain the benefits and tradeoffs, recommend an option, and ask the user to choose before implementing. If only one sensible option remains, explain why and proceed.
 
-Don't invent weak options to reach three. If fewer are viable, or independent agents are unavailable, explain why and get the user's agreement on how to proceed. Revisit the choice only when new evidence creates a meaningful design decision.
+If independent agents are unavailable for a design decision that needs this review, explain the gap and agree on a way forward. Revisit a settled choice only when new evidence creates a meaningful design decision.
 
 ## Do the work
 
@@ -48,6 +48,6 @@ Track the agreed objective, final criteria, tools, and design in one place: the 
 
 Work, check results, and fix failures until the objective is met. Delegate when useful, passing along the relevant agreement. Stop for a user pause, a blocker, or a decision that needs the user. If repeated attempts make no progress, explain what's stuck.
 
-Any of the four decisions can change. Follow user revisions; for your proposed changes, explain the effect and get signoff before dependent work. Update the agreement and affected delegates. Routine diagnostic choices within that agreement don't need approval.
+Any of the four decisions can change. Follow user revisions; for your proposed changes, explain the effect and get signoff before dependent work. Routine diagnostic choices don't need approval. You can also switch tools when they provide equivalent evidence within the agreed scope, access, and cost. Update the agreement and affected delegates when needed.
 
 Before declaring done, account for every final criterion. Reuse evidence that still applies; run checks where evidence is missing or changes may have invalidated it. Report what changed, what passed, and anything unverified. Mark the goal complete only when the objective and required criteria are met.
